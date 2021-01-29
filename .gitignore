@@ -1,0 +1,7 @@
+bin/**/*.exe
+bin/**/*.def
+
+*.sublime-workspace
+
+*.log
+*.dat
