@@ -255,12 +255,12 @@ NKAPI B8 nkKeyReleased (nkCONTEXT* nokia, nkKEY key)
 NKAPI B8 nkKeyUp (nkCONTEXT* nokia, nkKEY key)
 {
     NK_ASSERT(nokia && key >= 0 && key < NK_KEY_TOTAL);
-    return (nokia->currKeyState[key]);
+    return (!nokia->currKeyState[key]);
 }
 NKAPI B8 nkKeyDown (nkCONTEXT* nokia, nkKEY key)
 {
     NK_ASSERT(nokia && key >= 0 && key < NK_KEY_TOTAL);
-    return (!nokia->currKeyState[key]);
+    return (nokia->currKeyState[key]);
 }
 
 // Do not call this function! It is used internally to convert the internal tile, text,
@@ -274,16 +274,16 @@ NKAPI void nkDrawFrame (nkCONTEXT* nokia)
         nokia->screen.pixels[i] = NK_COLOR_0;
     }
 
-    for (int iy=0; iy<NK_SCREEN_H_TILES; ++iy)
+    for (S32 iy=0; iy<NK_SCREEN_H_TILES; ++iy)
     {
-        for (int ix=0; ix<NK_SCREEN_W_TILES; ++ix)
+        for (S32 ix=0; ix<NK_SCREEN_W_TILES; ++ix)
         {
             if (nokia->textMap[iy*NK_SCREEN_W_TILES+ix])
             {
-                for (int i=0; i<NK_TILE_H; ++i)
+                for (S32 i=0; i<NK_TILE_H; ++i)
                 {
                     U8 row = NK_FONT[(nokia->textMap[iy*NK_SCREEN_W_TILES+ix]*NK_TILE_H)+i];
-                    for (int j=0; j<NK_TILE_W; ++j)
+                    for (S32 j=0; j<NK_TILE_W; ++j)
                     {
                         if (row & (1 << (7-j)))
                         {
@@ -296,14 +296,14 @@ NKAPI void nkDrawFrame (nkCONTEXT* nokia)
             {
                 if (nokia->tileMap[iy*NK_SCREEN_W_TILES+ix])
                 {
-                    for (int i=0; i<NK_TILE_H; ++i)
+                    for (S32 i=0; i<NK_TILE_H; ++i)
                     {
                         U8 row = NK_TILE[(nokia->tileMap[iy*NK_SCREEN_W_TILES+ix]*NK_TILE_H)+i];
-                        for (int j=0; j<NK_TILE_W; ++j)
+                        for (S32 j=0; j<NK_TILE_W; ++j)
                         {
                             if (row & (1 << (7-j)))
                             {
-                                nokia->screen.pixels[(iy*NK_TILE_H)*NK_SCREEN_W+(ix*NK_TILE_W)] = NK_COLOR_1;
+                                nokia->screen.pixels[((iy*NK_TILE_H)+i)*NK_SCREEN_W+((ix*NK_TILE_W)+j)] = NK_COLOR_1;
                             }
                         }
                     }
@@ -312,11 +312,29 @@ NKAPI void nkDrawFrame (nkCONTEXT* nokia)
         }
     }
 
-    for (int i=0; i<NK_MAX_SPRITES; ++i)
+    for (S32 i=0; i<NK_MAX_SPRITES; ++i)
     {
         if (nokia->spriteList[i].index)
         {
-            // @Incomplete: ...
+            nkSPRITE* spr = &nokia->spriteList[i];
+
+            for (S32 i=0; i<NK_TILE_H; ++i)
+            {
+                U8 row = NK_TILE[(spr->index*NK_TILE_H)+i];
+                for (S32 j=0; j<NK_TILE_W; ++j)
+                {
+                    if (row & (1 << (7-j)))
+                    {
+                        S32 x = (spr->x+j);
+                        S32 y = (spr->y+i);
+
+                        if (x >= 0 && x < NK_SCREEN_W && y >= 0 && y < NK_SCREEN_H)
+                        {
+                            nokia->screen.pixels[y*NK_SCREEN_W+x] = NK_COLOR_1;
+                        }
+                    }
+                }
+            }
         }
     }
 }
