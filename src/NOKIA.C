@@ -42,8 +42,8 @@ typedef  int16_t B16;
 typedef  int32_t B32;
 typedef  int64_t B64;
 
+#include "TILESET.C"
 #include "FONT.C"
-#include "TILE.C"
 
 NK_ENUM(nkKEY)
 {

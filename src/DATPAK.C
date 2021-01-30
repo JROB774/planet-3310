@@ -2,7 +2,7 @@
 #define STB_IMAGE_STATIC
 #define STBI_NO_SIMD
 
-#include "STBIMAGE.C"
+#include "STBIMG.C"
 
 #include <stdlib.h>
 #include <stdio.h>
