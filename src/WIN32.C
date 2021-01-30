@@ -143,7 +143,6 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
 {
     // Attach to our parent's console if possible so that we can get console input and output.
     // If we don't have a parent console then we don't really care and don't create a console.
-    /*
     #ifdef NK_DEBUG
     if (AttachConsole(ATTACH_PARENT_PROCESS))
     {
@@ -152,7 +151,6 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
         freopen("CONOUT$", "w", stderr);
     }
     #endif
-    */
 
     WNDCLASSEXA windowClass;
     ZeroMemory(&windowClass, sizeof(windowClass));
@@ -249,7 +247,6 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
             }
         }
 
-        // Update the keyboard state.
         CopyMemory(nokia.prevKeyState, nokia.currKeyState, sizeof(nokia.prevKeyState));
         nokia.currKeyState[NK_KEY_Q    ] = ((GetKeyState('Q'          )>>8) != 0);
         nokia.currKeyState[NK_KEY_W    ] = ((GetKeyState('W'          )>>8) != 0);
@@ -264,29 +261,19 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
         nokia.currKeyState[NK_KEY_COMMA] = ((GetKeyState(VK_OEM_COMMA )>>8) != 0);
         nokia.currKeyState[NK_KEY_POINT] = ((GetKeyState(VK_OEM_PERIOD)>>8) != 0);
 
-        // Reset the current sound to play.
-        nokia.snd = NULL;
+        nkGameUpdate(&nokia);
 
-        // Clear the screen.
-        for (S32 i=0, n=(NK_SCREEN_W*NK_SCREEN_H); i<n; ++i)
+        if (nokia.sound)
         {
-            nokia.screen.pixels[i] = NK_COLOR_0;
+            PlaySound(nokia.sound, NULL, SND_ASYNC|SND_FILENAME|SND_NODEFAULT);
+            nokia.sound = NULL; // Reset the sound after playing it.
         }
 
-        NkGameUpdate(&nokia);
-
-        // If the user requested a sound to play then play it.
-        if (nokia.snd)
-        {
-            PlaySound(nokia.snd, NULL, SND_ASYNC|SND_FILENAME|SND_NODEFAULT);
-        }
-
-        // Draw the screen contents to the window.
+        nkDrawFrame(&nokia);
         HDC hdc = GetDC(hwnd);
         WinUpdateDisplay(hwnd, hdc, &nokia);
         ReleaseDC(hwnd, hdc);
 
-        // Cap framerate.
         QueryPerformanceCounter(&endCounter);
         elapsedCounter.QuadPart = endCounter.QuadPart - lastCounter.QuadPart;
         FLOAT elapsedTime = (FLOAT)(elapsedCounter.QuadPart) / (FLOAT)(perfFrequency.QuadPart);
