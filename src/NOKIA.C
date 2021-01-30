@@ -1,9 +1,14 @@
 #include <stdint.h>
-#include <assert.h>
+#include <stdio.h>
 #include <string.h>
+#include <assert.h>
+#include <stdarg.h>
 
 #define NK_SCREEN_W 84
 #define NK_SCREEN_H 48
+
+#define NK_TILE_W 7
+#define NK_TILE_H 8
 
 #define NKAPI static
 
@@ -19,6 +24,7 @@
 #define NK_ASSERT(e)         assert(e)
 #define NK_ZERO_MEM(    x)   memset(&(x), 0, sizeof( (x)))
 #define NK_ZERO_MEM_PTR(x)   memset( (x), 0, sizeof(*(x)))
+#define NK_ZERO_MEM_ARR(x)   memset( (x), 0, sizeof( (x)))
 #define NK_ARRAY_SIZE(a)     (sizeof(a)/(sizeof((a)[0])))
 #define NK_CLAMP(x,low,high) (((x)>(high))?(high):(((x)<(low))?(low):(x)))
 #define NK_ABS(a)            (((a)<0)?-(a):(a))

@@ -47,29 +47,27 @@ int main (int argc, char** argv)
                     fprintf(file, "static const U8 %s[] =\n", name);
                     fprintf(file, "{\n");
 
-                    int counter = 0;
-
                     U32* pixels = (U32*)data;
-                    for (int iy=0; iy<h; ++iy)
+                    for (int iy=0; iy<h; iy+=8)
                     {
                         for (int ix=0; ix<w; ix+=7)
                         {
-                            // We pack each row of 7 pixels into a single byte.
-                            U8 byte = 0;
-                            for (int i=0; i<7; ++i)
+                            // We pack each tile's data linearlly from the top to the bottom row.
+                            for (int i=0; i<8; ++i)
                             {
-                                if (pixels[iy*w+(ix+i)] == 0xFF000000)
+                                // We pack each row of 7 pixels into a single byte.
+                                U8 byte = 0;
+                                for (int j=0; j<7; ++j)
                                 {
-                                    byte |= (1 << (7-i));
+                                    if (pixels[(iy+i)*w+(ix+j)] == 0xFF000000)
+                                    {
+                                        byte |= (1 << (7-j));
+                                    }
                                 }
+                                fprintf(file, "0x%02X,", byte);
                             }
-                            fprintf(file, "0x%02X,", byte);
 
-                            counter++;
-                            if (counter != 0 && counter % 8 == 0)
-                            {
-                                fprintf(file, "\n");
-                            }
+                            fprintf(file, "\n");
                         }
                     }
 
