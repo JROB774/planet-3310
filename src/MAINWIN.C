@@ -1,15 +1,15 @@
 #include <windows.h>
-#include <stdio.h>
 
 #include "NOKIA.C"
+#include "GAME.C"
 
-void WinFatalError (const char* msg)
+void WINAPI WinFatalError (const char* msg)
 {
     MessageBoxA(NULL, msg, "WINERROR", MB_OK|MB_ICONERROR);
     ExitProcess(1); // Failure
 }
 
-void WinUpdateDisplay (HWND hwnd, HDC hdc, NOKIA* nokia)
+void WINAPI WinUpdateDisplay (HWND hwnd, HDC hdc, nkCONTEXT* nokia)
 {
     RECT client;
     GetClientRect(hwnd, &client);
@@ -26,25 +26,25 @@ void WinUpdateDisplay (HWND hwnd, HDC hdc, NOKIA* nokia)
     FillRect(backDC, &client, brush);
     DeleteObject(brush);
 
-    INT xScale = windowWidth / NOKIA_SCREEN_W;
-    INT yScale = windowHeight / NOKIA_SCREEN_H;
+    INT xScale = windowWidth / NK_SCREEN_W;
+    INT yScale = windowHeight / NK_SCREEN_H;
 
-    INT scale = NOKIA_MIN(xScale,yScale);
+    INT scale = NK_MIN(xScale,yScale);
 
-    INT dstX = (windowWidth - (NOKIA_SCREEN_W*scale)) / 2;
-    INT dstY = (windowHeight - (NOKIA_SCREEN_H*scale)) / 2;
-    INT dstW = (NOKIA_SCREEN_W*scale);
-    INT dstH = (NOKIA_SCREEN_H*scale);
+    INT dstX = (windowWidth - (NK_SCREEN_W*scale)) / 2;
+    INT dstY = (windowHeight - (NK_SCREEN_H*scale)) / 2;
+    INT dstW = (NK_SCREEN_W*scale);
+    INT dstH = (NK_SCREEN_H*scale);
     INT srcX = 0;
     INT srcY = 0;
-    INT srcW = NOKIA_SCREEN_W;
-    INT srcH = NOKIA_SCREEN_H;
+    INT srcW = NK_SCREEN_W;
+    INT srcH = NK_SCREEN_H;
 
     BITMAPINFO bitmapInfo;
     ZeroMemory(&bitmapInfo, sizeof(bitmapInfo));
     bitmapInfo.bmiHeader.biSize = sizeof(bitmapInfo.bmiHeader);
-    bitmapInfo.bmiHeader.biWidth = NOKIA_SCREEN_W;
-    bitmapInfo.bmiHeader.biHeight = -NOKIA_SCREEN_H;
+    bitmapInfo.bmiHeader.biWidth = NK_SCREEN_W;
+    bitmapInfo.bmiHeader.biHeight = -NK_SCREEN_H;
     bitmapInfo.bmiHeader.biPlanes = 1;
     bitmapInfo.bmiHeader.biBitCount = nokia->screen.bits;
     bitmapInfo.bmiHeader.biCompression = BI_RGB;
@@ -68,13 +68,13 @@ void WinUpdateDisplay (HWND hwnd, HDC hdc, NOKIA* nokia)
 LRESULT CALLBACK WinProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     // It is important to check that this is non-null before use as WinProc can be called before this is set.
-    NOKIA* nokia = NOKIA_CAST(NOKIA*, GetWindowLongPtr(hwnd,0));
+    nkCONTEXT* nokia = NK_CAST(nkCONTEXT*, GetWindowLongPtr(hwnd,0));
 
     switch (uMsg)
     {
         case (WM_GETMINMAXINFO):
         {
-            RECT rwWindow = { 0,0,NOKIA_SCREEN_W,NOKIA_SCREEN_H };
+            RECT rwWindow = { 0,0,NK_SCREEN_W,NK_SCREEN_H };
             AdjustWindowRect(&rwWindow, WS_OVERLAPPEDWINDOW, FALSE);
             LPMINMAXINFO lpMMI = (LPMINMAXINFO)lParam;
             lpMMI->ptMinTrackSize.x = rwWindow.right - rwWindow.left;
@@ -142,7 +142,8 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
 {
     // Attach to our parent's console if possible so that we can get console input and output.
     // If we don't have a parent console then we don't really care and don't create a console.
-    #ifdef NOKIA_DEBUG
+    /*
+    #ifdef NK_DEBUG
     if (AttachConsole(ATTACH_PARENT_PROCESS))
     {
         freopen("CONIN$",  "r", stdin );
@@ -150,15 +151,16 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
         freopen("CONOUT$", "w", stderr);
     }
     #endif
+    */
 
     WNDCLASSEXA windowClass;
     ZeroMemory(&windowClass, sizeof(windowClass));
     windowClass.cbSize = sizeof(windowClass);
     windowClass.style = CS_HREDRAW|CS_VREDRAW;
     windowClass.lpfnWndProc = WinProc;
-    windowClass.cbWndExtra = sizeof(NOKIA*);
+    windowClass.cbWndExtra = sizeof(nkCONTEXT*);
     windowClass.hInstance = hInstance;
-    windowClass.lpszClassName = "NOKIAWINCLASS";
+    windowClass.lpszClassName = "nkWINCLASS";
     windowClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
     windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
 
@@ -168,7 +170,7 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
     }
 
     // Adjust the window so its client area is actually the size we specify without the border being included.
-    RECT rwWindow = { 0,0,NOKIA_SCREEN_W*5,NOKIA_SCREEN_H*5 };
+    RECT rwWindow = { 0,0,NK_SCREEN_W*5,NK_SCREEN_H*5 };
     AdjustWindowRect(&rwWindow, WS_OVERLAPPEDWINDOW, FALSE);
 
     LONG windowWidth = rwWindow.right - rwWindow.left;
@@ -181,26 +183,26 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
         WinFatalError("Failed to create the window!\n");
     }
 
-    INT screenWidth = NOKIA_SCREEN_W;
-    INT screenHeight = NOKIA_SCREEN_H;
+    INT screenWidth = NK_SCREEN_W;
+    INT screenHeight = NK_SCREEN_H;
     INT screenBits = 32;
     INT screenSize = (screenWidth*screenHeight*(screenBits/8));
 
     // We know the size of the screen at compile-time so we don't dynamically allocate it.
     // Instead we just have a static array that we point the screen's pixels pointer to.
-    U32 screenPixels[NOKIA_SCREEN_W*NOKIA_SCREEN_H];
+    U32 screenPixels[NK_SCREEN_W*NK_SCREEN_H];
     ZeroMemory(screenPixels, sizeof(screenPixels));
 
-    NOKIA nokia;
+    nkCONTEXT nokia;
     ZeroMemory(&nokia, sizeof(nokia));
     nokia.screen.width = screenWidth;
     nokia.screen.height = screenHeight;
     nokia.screen.bits = screenBits;
     nokia.screen.pixels = screenPixels;
 
-    // Store the NOKIA context in our HWND so we can access it in our WinProc
+    // Store the nkCONTEXT in our HWND so we can access it in our WinProc
     // function, and potentially anywhere else we might want to in the code.
-    SetWindowLongPtrA(hwnd, 0, NOKIA_CAST(LONG_PTR, &nokia));
+    SetWindowLongPtrA(hwnd, 0, NK_CAST(LONG_PTR, &nokia));
 
     // Center window.
     RECT rwParent;
@@ -248,20 +250,26 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
 
         // Update the keyboard state.
         CopyMemory(nokia.prevKeyState, nokia.currKeyState, sizeof(nokia.prevKeyState));
-        nokia.currKeyState[NOKIA_KEY_Q    ] = ((GetKeyState('Q'          )>>8) != 0);
-        nokia.currKeyState[NOKIA_KEY_W    ] = ((GetKeyState('W'          )>>8) != 0);
-        nokia.currKeyState[NOKIA_KEY_E    ] = ((GetKeyState('E'          )>>8) != 0);
-        nokia.currKeyState[NOKIA_KEY_A    ] = ((GetKeyState('A'          )>>8) != 0);
-        nokia.currKeyState[NOKIA_KEY_S    ] = ((GetKeyState('S'          )>>8) != 0);
-        nokia.currKeyState[NOKIA_KEY_D    ] = ((GetKeyState('D'          )>>8) != 0);
-        nokia.currKeyState[NOKIA_KEY_Z    ] = ((GetKeyState('Z'          )>>8) != 0);
-        nokia.currKeyState[NOKIA_KEY_X    ] = ((GetKeyState('X'          )>>8) != 0);
-        nokia.currKeyState[NOKIA_KEY_C    ] = ((GetKeyState('C'          )>>8) != 0);
-        nokia.currKeyState[NOKIA_KEY_SPACE] = ((GetKeyState(VK_SPACE     )>>8) != 0);
-        nokia.currKeyState[NOKIA_KEY_COMMA] = ((GetKeyState(VK_OEM_COMMA )>>8) != 0);
-        nokia.currKeyState[NOKIA_KEY_POINT] = ((GetKeyState(VK_OEM_PERIOD)>>8) != 0);
+        nokia.currKeyState[NK_KEY_Q    ] = ((GetKeyState('Q'          )>>8) != 0);
+        nokia.currKeyState[NK_KEY_W    ] = ((GetKeyState('W'          )>>8) != 0);
+        nokia.currKeyState[NK_KEY_E    ] = ((GetKeyState('E'          )>>8) != 0);
+        nokia.currKeyState[NK_KEY_A    ] = ((GetKeyState('A'          )>>8) != 0);
+        nokia.currKeyState[NK_KEY_S    ] = ((GetKeyState('S'          )>>8) != 0);
+        nokia.currKeyState[NK_KEY_D    ] = ((GetKeyState('D'          )>>8) != 0);
+        nokia.currKeyState[NK_KEY_Z    ] = ((GetKeyState('Z'          )>>8) != 0);
+        nokia.currKeyState[NK_KEY_X    ] = ((GetKeyState('X'          )>>8) != 0);
+        nokia.currKeyState[NK_KEY_C    ] = ((GetKeyState('C'          )>>8) != 0);
+        nokia.currKeyState[NK_KEY_SPACE] = ((GetKeyState(VK_SPACE     )>>8) != 0);
+        nokia.currKeyState[NK_KEY_COMMA] = ((GetKeyState(VK_OEM_COMMA )>>8) != 0);
+        nokia.currKeyState[NK_KEY_POINT] = ((GetKeyState(VK_OEM_PERIOD)>>8) != 0);
 
-        // MicroGameUpdate(&microContext);
+        // Clear the screen.
+        for (S32 i=0, n=(NK_SCREEN_W*NK_SCREEN_H); i<n; ++i)
+        {
+            nokia.screen.pixels[i] = NK_COLOR_0;
+        }
+
+        NkGameUpdate(&nokia);
 
         // Draw the screen contents to the window.
         HDC hdc = GetDC(hwnd);
