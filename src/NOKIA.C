@@ -19,6 +19,7 @@
 #define NK_ASSERT(e)         assert(e)
 #define NK_ZERO_MEM(    x)   memset(&(x), 0, sizeof( (x)))
 #define NK_ZERO_MEM_PTR(x)   memset( (x), 0, sizeof(*(x)))
+#define NK_ARRAY_SIZE(a)     (sizeof(a)/(sizeof((a)[0])))
 #define NK_CLAMP(x,low,high) (((x)>(high))?(high):(((x)<(low))?(low):(x)))
 #define NK_ABS(a)            (((a)<0)?-(a):(a))
 #define NK_SWAP(x,y,t)       do { t tmp__ = x; x = y; y = tmp__; } while (0)
@@ -40,6 +41,9 @@ typedef   int8_t  B8;
 typedef  int16_t B16;
 typedef  int32_t B32;
 typedef  int64_t B64;
+
+#include "FONT.C"
+#include "TILE.C"
 
 NK_ENUM(nkKEY)
 {
