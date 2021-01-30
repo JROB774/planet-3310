@@ -230,7 +230,7 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
     QueryPerformanceFrequency(&perfFrequency);
     QueryPerformanceCounter(&lastCounter);
 
-    while (ShowCursor(FALSE) >= 0); // Loop because of Win32's weird display counter system.
+    // while (ShowCursor(FALSE) >= 0); // Loop because of Win32's weird display counter system.
     ShowWindow(hwnd, SW_SHOW);
 
     BOOL running = TRUE;
