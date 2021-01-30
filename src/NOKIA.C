@@ -55,7 +55,7 @@ typedef  int16_t B16;
 typedef  int32_t B32;
 typedef  int64_t B64;
 
-#include "TILESET.C"
+#include "TILE.C"
 #include "FONT.C"
 
 NK_ENUM(nkKEY)
@@ -298,7 +298,7 @@ NKAPI void nkDrawFrame (nkCONTEXT* nokia)
                 {
                     for (int i=0; i<NK_TILE_H; ++i)
                     {
-                        U8 row = NK_TILESET[(nokia->tileMap[iy*NK_SCREEN_W_TILES+ix]*NK_TILE_H)+i];
+                        U8 row = NK_TILE[(nokia->tileMap[iy*NK_SCREEN_W_TILES+ix]*NK_TILE_H)+i];
                         for (int j=0; j<NK_TILE_W; ++j)
                         {
                             if (row & (1 << (7-j)))
