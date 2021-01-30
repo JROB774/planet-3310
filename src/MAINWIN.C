@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <mmsystem.h>
 
 #include "NOKIA.C"
 #include "GAME.C"
@@ -263,6 +264,9 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
         nokia.currKeyState[NK_KEY_COMMA] = ((GetKeyState(VK_OEM_COMMA )>>8) != 0);
         nokia.currKeyState[NK_KEY_POINT] = ((GetKeyState(VK_OEM_PERIOD)>>8) != 0);
 
+        // Reset the current sound to play.
+        nokia.snd = NULL;
+
         // Clear the screen.
         for (S32 i=0, n=(NK_SCREEN_W*NK_SCREEN_H); i<n; ++i)
         {
@@ -270,6 +274,12 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
         }
 
         NkGameUpdate(&nokia);
+
+        // If the user requested a sound to play then play it.
+        if (nokia.snd)
+        {
+            PlaySound(nokia.snd, NULL, SND_ASYNC|SND_FILENAME|SND_NODEFAULT);
+        }
 
         // Draw the screen contents to the window.
         HDC hdc = GetDC(hwnd);

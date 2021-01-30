@@ -63,6 +63,48 @@ NK_ENUM(nkKEY)
     NK_KEY_TOTAL
 };
 
+NK_ENUM(nkSND)
+{
+    NK_SND_NONE,
+    NK_SND_BLIP01,
+    NK_SND_BLIP02,
+    NK_SND_BLIP03,
+    NK_SND_BLIP04,
+    NK_SND_BLIP05,
+    NK_SND_BLIP06,
+    NK_SND_BLIP07,
+    NK_SND_BLIP08,
+    NK_SND_BLIP09,
+    NK_SND_BLIP10,
+    NK_SND_BLIP11,
+    NK_SND_BLIP12,
+    NK_SND_BLIP13,
+    NK_SND_BLIP14,
+    NK_SND_C5,
+    NK_SND_CRUST,
+    NK_SND_GOOD01,
+    NK_SND_GOOD02,
+    NK_SND_GOOD03,
+    NK_SND_HIT01,
+    NK_SND_HIT02,
+    NK_SND_HIT03,
+    NK_SND_HIT04,
+    NK_SND_HIT05,
+    NK_SND_HIT06,
+    NK_SND_JINGLE,
+    NK_SND_MELODY,
+    NK_SND_NEGTIV01,
+    NK_SND_NEGTIV02,
+    NK_SND_ODD01,
+    NK_SND_OOD02,
+    NK_SND_ODD03,
+    NK_SND_ODD04,
+    NK_SND_RING,
+    NK_SND_SNDTEST,
+    NK_SND_UNREAL,
+    NK_SND_TOTAL
+};
+
 NK_STRUCT(nkSCREEN)
 {
     S32  width;
@@ -73,14 +115,62 @@ NK_STRUCT(nkSCREEN)
 
 NK_STRUCT(nkCONTEXT)
 {
-    nkSCREEN screen;
-    B8       prevKeyState[NK_KEY_TOTAL];
-    B8       currKeyState[NK_KEY_TOTAL];
-    S32      viewportX;
-    S32      viewportY;
-    S32      viewportW;
-    S32      viewportH;
+    nkSCREEN    screen;
+    const char* snd;
+    B8          prevKeyState[NK_KEY_TOTAL];
+    B8          currKeyState[NK_KEY_TOTAL];
+    S32         viewportX;
+    S32         viewportY;
+    S32         viewportW;
+    S32         viewportH;
 };
+
+NKAPI void nkPlaySound (nkCONTEXT* nokia, nkSND snd)
+{
+    NK_ASSERT(nokia && snd >= 0 && snd < NK_SND_TOTAL);
+
+    static const char* SOUNDS[NK_SND_TOTAL] =
+    {
+        NULL,
+        "SNDBANK/BLIP01.WAV",
+        "SNDBANK/BLIP02.WAV",
+        "SNDBANK/BLIP03.WAV",
+        "SNDBANK/BLIP04.WAV",
+        "SNDBANK/BLIP05.WAV",
+        "SNDBANK/BLIP06.WAV",
+        "SNDBANK/BLIP07.WAV",
+        "SNDBANK/BLIP08.WAV",
+        "SNDBANK/BLIP09.WAV",
+        "SNDBANK/BLIP10.WAV",
+        "SNDBANK/BLIP11.WAV",
+        "SNDBANK/BLIP12.WAV",
+        "SNDBANK/BLIP13.WAV",
+        "SNDBANK/BLIP14.WAV",
+        "SNDBANK/C5.WAV",
+        "SNDBANK/CRUST.WAV",
+        "SNDBANK/GOOD01.WAV",
+        "SNDBANK/GOOD02.WAV",
+        "SNDBANK/GOOD03.WAV",
+        "SNDBANK/HIT01.WAV",
+        "SNDBANK/HIT02.WAV",
+        "SNDBANK/HIT03.WAV",
+        "SNDBANK/HIT04.WAV",
+        "SNDBANK/HIT06.WAV",
+        "SNDBANK/JINGLE.WAV",
+        "SNDBANK/MELODY.WAV",
+        "SNDBANK/NEGTIV01.WAV",
+        "SNDBANK/NEGTIV02.WAV",
+        "SNDBANK/ODD01.WAV",
+        "SNDBANK/ODD02.WAV",
+        "SNDBANK/ODD03.WAV",
+        "SNDBANK/ODD04.WAV",
+        "SNDBANK/RING.WAV",
+        "SNDBANK/SNDTEST.WAV",
+        "SNDBANK/UNREAL.WAV",
+    };
+
+    nokia->snd = SOUNDS[snd];
+}
 
 NKAPI void nkDrawPoint (nkCONTEXT* nokia, S32 x, S32 y)
 {
