@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <assert.h>
 #include <string.h>
 
 #define NK_SCREEN_W 84
@@ -15,13 +16,7 @@
 #define NK_STRUCT(name) typedef struct name##_T name; struct name##_T
 #define NK_ENUM(name)   typedef enum   name##_T name; enum   name##_T
 
-#ifdef NK_DEBUG
-#include <assert.h>
-#define NK_ASSERT(e) assert(e)
-#else
-#define NK_ASSERT(e) (void)(0)
-#endif
-
+#define NK_ASSERT(e)         assert(e)
 #define NK_ZERO_MEM(    x)   memset(&(x), 0, sizeof( (x)))
 #define NK_ZERO_MEM_PTR(x)   memset( (x), 0, sizeof(*(x)))
 #define NK_CLAMP(x,low,high) (((x)>(high))?(high):(((x)<(low))?(low):(x)))
