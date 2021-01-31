@@ -1,11 +1,15 @@
-#include <stdint.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <assert.h>
 #include <stdarg.h>
 
 #define NK_SCREEN_W 84
 #define NK_SCREEN_H 48
+
+#define NK_MODE_TILEMAP 0 // Draw using tiles and sprites.
+#define NK_MODE_BITMAP  1 // Draw using primitives and sprites.
 
 #define NK_TILE_W 7
 #define NK_TILE_H 8
@@ -24,9 +28,6 @@
 
 #define NK_FALSE 0
 #define NK_TRUE  1
-
-#define NK_STRUCT(name) typedef struct name##_T name; struct name##_T
-#define NK_ENUM(name)   typedef enum   name##_T name; enum   name##_T
 
 #define NK_ASSERT(e)         assert(e)
 #define NK_ZERO_MEM(    x)   memset(&(x), 0, sizeof( (x)))
@@ -58,7 +59,7 @@ typedef  int64_t B64;
 #include "TILE.C"
 #include "FONT.C"
 
-NK_ENUM(nkKEY)
+typedef enum
 {
     NK_KEY_Q,
     NK_KEY_W,
@@ -73,9 +74,10 @@ NK_ENUM(nkKEY)
     NK_KEY_COMMA,
     NK_KEY_POINT,
     NK_KEY_TOTAL
-};
 
-NK_ENUM(nkSND)
+} nkKEY;
+
+typedef enum
 {
     NK_SND_NONE,
     NK_SND_BLIP01,
@@ -108,36 +110,41 @@ NK_ENUM(nkSND)
     NK_SND_NEGTIV01,
     NK_SND_NEGTIV02,
     NK_SND_ODD01,
-    NK_SND_OOD02,
+    NK_SND_ODD02,
     NK_SND_ODD03,
     NK_SND_ODD04,
     NK_SND_RING,
     NK_SND_SNDTEST,
     NK_SND_UNREAL,
     NK_SND_TOTAL
-};
 
-NK_STRUCT(nkSPRITE)
+} nkSND;
+
+typedef struct
 {
     S32 x;
     S32 y;
     U8  index;
-};
 
-NK_STRUCT(nkSCREEN)
+} nkSPRITE;
+
+typedef struct
 {
     S32  width;
     S32  height;
     S32  bits;
     U32* pixels;
-};
 
-NK_STRUCT(nkCONTEXT)
+} nkSCREEN;
+
+typedef struct
 {
-    const char* sound;
+    nkSND       sound;
     nkSPRITE    spriteList[NK_MAX_SPRITES];
     U8          tileMap[NK_SCREEN_TILES];
     U8          textMap[NK_SCREEN_TILES];
+    U8          mode;
+    U32         frame;
     // Internal
     nkSCREEN    screen;
     B8          prevKeyState[NK_KEY_TOTAL];
@@ -146,53 +153,13 @@ NK_STRUCT(nkCONTEXT)
     S32         viewportY;
     S32         viewportW;
     S32         viewportH;
-};
+
+} nkCONTEXT;
 
 NKAPI void nkPlaySound (nkCONTEXT* nokia, nkSND snd)
 {
     NK_ASSERT(nokia && snd >= 0 && snd < NK_SND_TOTAL);
-
-    static const char* SOUNDS[NK_SND_TOTAL] =
-    {
-        NULL,
-        "SNDBANK/BLIP01.WAV",
-        "SNDBANK/BLIP02.WAV",
-        "SNDBANK/BLIP03.WAV",
-        "SNDBANK/BLIP04.WAV",
-        "SNDBANK/BLIP05.WAV",
-        "SNDBANK/BLIP06.WAV",
-        "SNDBANK/BLIP07.WAV",
-        "SNDBANK/BLIP08.WAV",
-        "SNDBANK/BLIP09.WAV",
-        "SNDBANK/BLIP10.WAV",
-        "SNDBANK/BLIP11.WAV",
-        "SNDBANK/BLIP12.WAV",
-        "SNDBANK/BLIP13.WAV",
-        "SNDBANK/BLIP14.WAV",
-        "SNDBANK/C5.WAV",
-        "SNDBANK/CRUST.WAV",
-        "SNDBANK/GOOD01.WAV",
-        "SNDBANK/GOOD02.WAV",
-        "SNDBANK/GOOD03.WAV",
-        "SNDBANK/HIT01.WAV",
-        "SNDBANK/HIT02.WAV",
-        "SNDBANK/HIT03.WAV",
-        "SNDBANK/HIT04.WAV",
-        "SNDBANK/HIT06.WAV",
-        "SNDBANK/JINGLE.WAV",
-        "SNDBANK/MELODY.WAV",
-        "SNDBANK/NEGTIV01.WAV",
-        "SNDBANK/NEGTIV02.WAV",
-        "SNDBANK/ODD01.WAV",
-        "SNDBANK/ODD02.WAV",
-        "SNDBANK/ODD03.WAV",
-        "SNDBANK/ODD04.WAV",
-        "SNDBANK/RING.WAV",
-        "SNDBANK/SNDTEST.WAV",
-        "SNDBANK/UNREAL.WAV",
-    };
-
-    nokia->sound = SOUNDS[snd];
+    nokia->sound = snd;
 }
 
 NKAPI void nkSetSprite (nkCONTEXT* nokia, S32 x, S32 y, U8 slot, U8 index)
@@ -242,6 +209,167 @@ NKAPI void nkSetText (nkCONTEXT* nokia, S32 tileX, S32 tileY, const char* text, 
     }
 }
 
+NKAPI void nkDrawClear (nkCONTEXT* nokia)
+{
+    for (S32 i=0, n=(NK_SCREEN_W*NK_SCREEN_H); i<n; ++i)
+    {
+        nokia->screen.pixels[i] = NK_COLOR_0;
+    }
+}
+
+NKAPI void nkDrawPoint (nkCONTEXT* nokia, S32 x, S32 y)
+{
+    NK_ASSERT(nokia && nokia->mode == NK_MODE_BITMAP);
+    if (x < 0 || x >= NK_SCREEN_W || y < 0 || y >= NK_SCREEN_H) return;
+    nokia->screen.pixels[y*NK_SCREEN_W+x] = NK_COLOR_1;
+}
+
+NKAPI void nkDrawLine (nkCONTEXT* nokia, S32 x1, S32 y1, S32 x2, S32 y2)
+{
+    NK_ASSERT(nokia && nokia->mode == NK_MODE_BITMAP);
+
+    if (x1 > NK_SCREEN_W && x2 > NK_SCREEN_W) return;
+    if (x1 < 0 && x2 < 0) return;
+    if (y1 > NK_SCREEN_H && y2 > NK_SCREEN_H) return;
+    if (y1 < 0 && y2 < 0) return;
+
+    // Clamp the bounds to avoid overflows.
+    x1 = NK_CLAMP(x1, 0, NK_SCREEN_W);
+    y1 = NK_CLAMP(y1, 0, NK_SCREEN_H);
+    x2 = NK_CLAMP(x2, 0, NK_SCREEN_W);
+    y2 = NK_CLAMP(y2, 0, NK_SCREEN_H);
+
+    B8 steep = NK_FALSE;
+    if (NK_ABS(x1-x2)<NK_ABS(y1-y2))
+    {
+        NK_SWAP(x1, y1, S32);
+        NK_SWAP(x2, y2, S32);
+        steep = NK_TRUE;
+    }
+    if (x1>x2)
+    {
+        NK_SWAP(x1, x2, S32);
+        NK_SWAP(y1, y2, S32);
+    }
+    S32 dx = x2-x1;
+    S32 dy = y2-y1;
+    S32 derror2 = NK_ABS(dy)*2;
+    S32 error2 = 0;
+    S32 iy = y1;
+
+    for (S32 ix=x1; ix<=x2; ++ix)
+    {
+        if (steep) nokia->screen.pixels[ix*NK_SCREEN_W+iy] = NK_COLOR_1;
+        else nokia->screen.pixels[iy*NK_SCREEN_W+ix] = NK_COLOR_1;
+        error2 += derror2;
+        if (error2 > dx)
+        {
+            iy += (y2>y1?1:-1);
+            error2 -= dx*2;
+        }
+    }
+}
+
+NKAPI void nkDrawRect (nkCONTEXT* nokia, S32 x, S32 y, S32 w, S32 h)
+{
+    NK_ASSERT(nokia && nokia->mode == NK_MODE_BITMAP);
+
+    if (x > NK_SCREEN_W) return;
+    if (y > NK_SCREEN_H) return;
+
+    S32 x1 = x;
+    S32 y1 = y;
+    S32 x2 = x+w-1;
+    S32 y2 = y+h-1;
+
+    nkDrawLine(nokia, x2,y1,x2,y2); // Right
+    nkDrawLine(nokia, x1,y1,x1,y2); // Left
+    nkDrawLine(nokia, x1,y1,x2,y1); // Top
+    nkDrawLine(nokia, x1,y2,x2,y2); // Bottom
+}
+
+NKAPI void nkDrawFill (nkCONTEXT* nokia, S32 x, S32 y, S32 w, S32 h)
+{
+    NK_ASSERT(nokia && nokia->mode == NK_MODE_BITMAP);
+
+    if (x > NK_SCREEN_W-1) return;
+    if (y > NK_SCREEN_H-1) return;
+
+    S32 x1 = x;
+    S32 y1 = y;
+    S32 x2 = x+w-1;
+    S32 y2 = y+h-1;
+
+    // Clamp the bounds to avoid overflows.
+    x1 = NK_CLAMP(x1, 0, NK_SCREEN_W);
+    y1 = NK_CLAMP(y1, 0, NK_SCREEN_H);
+    x2 = NK_CLAMP(x2, 0, NK_SCREEN_W);
+    y2 = NK_CLAMP(y2, 0, NK_SCREEN_H);
+
+    for (S32 iy=y1; iy<=y2; ++iy)
+    {
+        for (S32 ix=x1; ix<=x2; ++ix)
+        {
+            nokia->screen.pixels[iy*NK_SCREEN_W+ix] = NK_COLOR_1;
+        }
+    }
+}
+
+NKAPI void nkDrawCircle (nkCONTEXT* nokia, S32 x, S32 y, S32 r, S32 thickness)
+{
+    NK_ASSERT(nokia && nokia->mode == NK_MODE_BITMAP);
+
+    S32 outer = r;
+    S32 inner = outer-thickness+1;
+
+    S32 xo   = outer;
+    S32 xi   = inner;
+    S32 yy   = 0;
+    S32 erro = 1-xo;
+    S32 erri = 1-xi;
+
+    while (xo >= yy)
+    {
+        nkDrawLine(nokia, x+xi, y+yy, x+xo, y+yy);
+        nkDrawLine(nokia, x+yy, y+xi, x+yy, y+xo);
+        nkDrawLine(nokia, x-xo, y+yy, x-xi, y+yy);
+        nkDrawLine(nokia, x-yy, y+xi, x-yy, y+xo);
+        nkDrawLine(nokia, x-xo, y-yy, x-xi, y-yy);
+        nkDrawLine(nokia, x-yy, y-xo, x-yy, y-xi);
+        nkDrawLine(nokia, x+xi, y-yy, x+xo, y-yy);
+        nkDrawLine(nokia, x+yy, y-xo, x+yy, y-xi);
+
+        yy++;
+
+        if (erro < 0)
+        {
+            erro += 2*yy+1;
+        }
+        else
+        {
+            xo--;
+            erro += 2*(yy-xo+1);
+        }
+
+        if (yy > inner)
+        {
+            xi = yy;
+        }
+        else
+        {
+            if (erri < 0)
+            {
+                erri += 2*yy+1;
+            }
+            else
+            {
+                xi--;
+                erri += 2*(yy-xi+1);
+            }
+        }
+    }
+}
+
 NKAPI B8 nkKeyPressed (nkCONTEXT* nokia, nkKEY key)
 {
     NK_ASSERT(nokia && key >= 0 && key < NK_KEY_TOTAL);
@@ -263,42 +391,32 @@ NKAPI B8 nkKeyDown (nkCONTEXT* nokia, nkKEY key)
     return (nokia->currKeyState[key]);
 }
 
-// Do not call this function! It is used internally to convert the internal tile, text,
+// Do not call these functions! It is used internally to convert the internal tile, text,
 // and sprite data into a screen of pixels that can then be drawn to the user's display.
-NKAPI void nkDrawFrame (nkCONTEXT* nokia)
+NKAPI void nkBeginFrame (nkCONTEXT* nokia)
+{
+    NK_ASSERT(nokia);
+    nkDrawClear(nokia);
+}
+
+NKAPI void nkEndFrame (nkCONTEXT* nokia)
 {
     NK_ASSERT(nokia);
 
-    for (S32 i=0, n=(NK_SCREEN_W*NK_SCREEN_H); i<n; ++i)
-    {
-        nokia->screen.pixels[i] = NK_COLOR_0;
-    }
+    nokia->frame++;
 
-    for (S32 iy=0; iy<NK_SCREEN_H_TILES; ++iy)
+    // Tile and text maps will only draw in NK_MODE_TILEMAP.
+    if (nokia->mode == NK_MODE_TILEMAP)
     {
-        for (S32 ix=0; ix<NK_SCREEN_W_TILES; ++ix)
+        for (S32 iy=0; iy<NK_SCREEN_H_TILES; ++iy)
         {
-            if (nokia->textMap[iy*NK_SCREEN_W_TILES+ix])
+            for (S32 ix=0; ix<NK_SCREEN_W_TILES; ++ix)
             {
-                for (S32 i=0; i<NK_TILE_H; ++i)
-                {
-                    U8 row = NK_FONT[(nokia->textMap[iy*NK_SCREEN_W_TILES+ix]*NK_TILE_H)+i];
-                    for (S32 j=0; j<NK_TILE_W; ++j)
-                    {
-                        if (row & (1 << (7-j)))
-                        {
-                            nokia->screen.pixels[((iy*NK_TILE_H)+i)*NK_SCREEN_W+((ix*NK_TILE_W)+j)] = NK_COLOR_1;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                if (nokia->tileMap[iy*NK_SCREEN_W_TILES+ix])
+                if (nokia->textMap[iy*NK_SCREEN_W_TILES+ix])
                 {
                     for (S32 i=0; i<NK_TILE_H; ++i)
                     {
-                        U8 row = NK_TILE[(nokia->tileMap[iy*NK_SCREEN_W_TILES+ix]*NK_TILE_H)+i];
+                        U8 row = NK_FONT[(nokia->textMap[iy*NK_SCREEN_W_TILES+ix]*NK_TILE_H)+i];
                         for (S32 j=0; j<NK_TILE_W; ++j)
                         {
                             if (row & (1 << (7-j)))
@@ -308,10 +426,28 @@ NKAPI void nkDrawFrame (nkCONTEXT* nokia)
                         }
                     }
                 }
+                else
+                {
+                    if (nokia->tileMap[iy*NK_SCREEN_W_TILES+ix])
+                    {
+                        for (S32 i=0; i<NK_TILE_H; ++i)
+                        {
+                            U8 row = NK_TILE[(nokia->tileMap[iy*NK_SCREEN_W_TILES+ix]*NK_TILE_H)+i];
+                            for (S32 j=0; j<NK_TILE_W; ++j)
+                            {
+                                if (row & (1 << (7-j)))
+                                {
+                                    nokia->screen.pixels[((iy*NK_TILE_H)+i)*NK_SCREEN_W+((ix*NK_TILE_W)+j)] = NK_COLOR_1;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
+    // Sprites draw whether NK_MODE_TILEMAP or NK_MODE_BITMAP.
     for (S32 i=0; i<NK_MAX_SPRITES; ++i)
     {
         if (nokia->spriteList[i].index)

@@ -103,6 +103,7 @@ LRESULT CALLBACK WinProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             monitorInfo.rcMonitor.right-monitorInfo.rcMonitor.left,
                             monitorInfo.rcMonitor.bottom-monitorInfo.rcMonitor.top,
                             SWP_NOOWNERZORDER|SWP_FRAMECHANGED);
+                        while (ShowCursor(FALSE) >= 0);
                     }
                 }
                 else
@@ -110,6 +111,7 @@ LRESULT CALLBACK WinProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     SetWindowLongPtrA(hwnd, GWL_STYLE, windowStyle | WS_OVERLAPPEDWINDOW);
                     SetWindowPlacement(hwnd, &windowPlacement);
                     SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_FRAMECHANGED);
+                    while (ShowCursor(TRUE) < 0);
                 }
 
                 return 0;
@@ -218,8 +220,6 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
 
     SetWindowPos(hwnd, NULL, xPos,yPos, 0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
 
-    // @TODO: Implement proper frame-timing code that's actually good...
-
     LARGE_INTEGER perfFrequency;
     LARGE_INTEGER elapsedCounter;
     LARGE_INTEGER lastCounter;
@@ -230,7 +230,6 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
     QueryPerformanceFrequency(&perfFrequency);
     QueryPerformanceCounter(&lastCounter);
 
-    // while (ShowCursor(FALSE) >= 0); // Loop because of Win32's weird display counter system.
     ShowWindow(hwnd, SW_SHOW);
 
     BOOL running = TRUE;
@@ -261,15 +260,57 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
         nokia.currKeyState[NK_KEY_COMMA] = ((GetKeyState(VK_OEM_COMMA )>>8) != 0);
         nokia.currKeyState[NK_KEY_POINT] = ((GetKeyState(VK_OEM_PERIOD)>>8) != 0);
 
+        nkBeginFrame(&nokia);
         nkGameUpdate(&nokia);
+        nkEndFrame(&nokia);
 
         if (nokia.sound)
         {
-            PlaySound(nokia.sound, NULL, SND_ASYNC|SND_FILENAME|SND_NODEFAULT);
-            nokia.sound = NULL; // Reset the sound after playing it.
+            static const char* SOUNDS[NK_SND_TOTAL] =
+            {
+                NULL,
+                "SNDBANK/BLIP01.WAV",
+                "SNDBANK/BLIP02.WAV",
+                "SNDBANK/BLIP03.WAV",
+                "SNDBANK/BLIP04.WAV",
+                "SNDBANK/BLIP05.WAV",
+                "SNDBANK/BLIP06.WAV",
+                "SNDBANK/BLIP07.WAV",
+                "SNDBANK/BLIP08.WAV",
+                "SNDBANK/BLIP09.WAV",
+                "SNDBANK/BLIP10.WAV",
+                "SNDBANK/BLIP11.WAV",
+                "SNDBANK/BLIP12.WAV",
+                "SNDBANK/BLIP13.WAV",
+                "SNDBANK/BLIP14.WAV",
+                "SNDBANK/C5.WAV",
+                "SNDBANK/CRUST.WAV",
+                "SNDBANK/GOOD01.WAV",
+                "SNDBANK/GOOD02.WAV",
+                "SNDBANK/GOOD03.WAV",
+                "SNDBANK/HIT01.WAV",
+                "SNDBANK/HIT02.WAV",
+                "SNDBANK/HIT03.WAV",
+                "SNDBANK/HIT04.WAV",
+                "SNDBANK/HIT05.WAV",
+                "SNDBANK/HIT06.WAV",
+                "SNDBANK/JINGLE.WAV",
+                "SNDBANK/MELODY.WAV",
+                "SNDBANK/NEGTIV01.WAV",
+                "SNDBANK/NEGTIV02.WAV",
+                "SNDBANK/ODD01.WAV",
+                "SNDBANK/ODD02.WAV",
+                "SNDBANK/ODD03.WAV",
+                "SNDBANK/ODD04.WAV",
+                "SNDBANK/RING.WAV",
+                "SNDBANK/SNDTEST.WAV",
+                "SNDBANK/UNREAL.WAV",
+            };
+
+            PlaySound(SOUNDS[nokia.sound], NULL, SND_ASYNC|SND_FILENAME|SND_NODEFAULT);
+            nokia.sound = NK_SND_NONE; // Reset the sound after playing it.
         }
 
-        nkDrawFrame(&nokia);
         HDC hdc = GetDC(hwnd);
         WinUpdateDisplay(hwnd, hdc, &nokia);
         ReleaseDC(hwnd, hdc);
