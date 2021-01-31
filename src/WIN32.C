@@ -171,7 +171,7 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
     }
 
     // Adjust the window so its client area is actually the size we specify without the border being included.
-    RECT rwWindow = { 0,0,NK_SCREEN_W*5,NK_SCREEN_H*5 };
+    RECT rwWindow = { 0,0,NK_SCREEN_W*8,NK_SCREEN_H*8 };
     AdjustWindowRect(&rwWindow, WS_OVERLAPPEDWINDOW, FALSE);
 
     LONG windowWidth = rwWindow.right - rwWindow.left;
