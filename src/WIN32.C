@@ -247,18 +247,25 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
         }
 
         CopyMemory(nokia.prevKeyState, nokia.currKeyState, sizeof(nokia.prevKeyState));
-        nokia.currKeyState[NK_KEY_Q    ] = ((GetKeyState('Q'          )>>8) != 0);
-        nokia.currKeyState[NK_KEY_W    ] = ((GetKeyState('W'          )>>8) != 0);
-        nokia.currKeyState[NK_KEY_E    ] = ((GetKeyState('E'          )>>8) != 0);
-        nokia.currKeyState[NK_KEY_A    ] = ((GetKeyState('A'          )>>8) != 0);
-        nokia.currKeyState[NK_KEY_S    ] = ((GetKeyState('S'          )>>8) != 0);
-        nokia.currKeyState[NK_KEY_D    ] = ((GetKeyState('D'          )>>8) != 0);
-        nokia.currKeyState[NK_KEY_Z    ] = ((GetKeyState('Z'          )>>8) != 0);
-        nokia.currKeyState[NK_KEY_X    ] = ((GetKeyState('X'          )>>8) != 0);
-        nokia.currKeyState[NK_KEY_C    ] = ((GetKeyState('C'          )>>8) != 0);
-        nokia.currKeyState[NK_KEY_SPACE] = ((GetKeyState(VK_SPACE     )>>8) != 0);
-        nokia.currKeyState[NK_KEY_COMMA] = ((GetKeyState(VK_OEM_COMMA )>>8) != 0);
-        nokia.currKeyState[NK_KEY_POINT] = ((GetKeyState(VK_OEM_PERIOD)>>8) != 0);
+        if (GetActiveWindow() == hwnd) // Check if we have input focus.
+        {
+            nokia.currKeyState[NK_KEY_Q    ] = ((GetKeyState('Q'          )>>8) != 0);
+            nokia.currKeyState[NK_KEY_W    ] = ((GetKeyState('W'          )>>8) != 0);
+            nokia.currKeyState[NK_KEY_E    ] = ((GetKeyState('E'          )>>8) != 0);
+            nokia.currKeyState[NK_KEY_A    ] = ((GetKeyState('A'          )>>8) != 0);
+            nokia.currKeyState[NK_KEY_S    ] = ((GetKeyState('S'          )>>8) != 0);
+            nokia.currKeyState[NK_KEY_D    ] = ((GetKeyState('D'          )>>8) != 0);
+            nokia.currKeyState[NK_KEY_Z    ] = ((GetKeyState('Z'          )>>8) != 0);
+            nokia.currKeyState[NK_KEY_X    ] = ((GetKeyState('X'          )>>8) != 0);
+            nokia.currKeyState[NK_KEY_C    ] = ((GetKeyState('C'          )>>8) != 0);
+            nokia.currKeyState[NK_KEY_SPACE] = ((GetKeyState(VK_SPACE     )>>8) != 0);
+            nokia.currKeyState[NK_KEY_COMMA] = ((GetKeyState(VK_OEM_COMMA )>>8) != 0);
+            nokia.currKeyState[NK_KEY_POINT] = ((GetKeyState(VK_OEM_PERIOD)>>8) != 0);
+        }
+        else
+        {
+            ZeroMemory(nokia.currKeyState, sizeof(nokia.currKeyState));
+        }
 
         nkBeginFrame(&nokia);
         nkGameUpdate(&nokia);
