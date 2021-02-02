@@ -169,7 +169,7 @@ NKAPI void nkSetSprite (nkCONTEXT* nokia, S32 x, S32 y, U8 slot, U8 index)
     spr->x = x, spr->y = y, spr->index = index;
 }
 
-NKAPI void nkSetText (nkCONTEXT* nokia, S32 tileX, S32 tileY, const char* text, ...)
+NKAPI void nkSetText (nkCONTEXT* nokia, S32 tileX, S32 tileY, B8 invert, const char* text, ...)
 {
     NK_ASSERT(nokia);
 
@@ -189,12 +189,14 @@ NKAPI void nkSetText (nkCONTEXT* nokia, S32 tileX, S32 tileY, const char* text, 
     S32 startX = tileX;
     S32 startY = tileY;
 
+    U8 offset = (invert) ? 0x80 : 0x00;
+
     for (const char* c=textBuffer; *c; ++c)
     {
         if (tileX >= 0 && tileX < NK_SCREEN_W_TILES &&
             tileY >= 0 && tileY < NK_SCREEN_H_TILES)
         {
-            nokia->textMap[tileY*NK_SCREEN_W_TILES+tileX] = *c;
+            nokia->textMap[tileY*NK_SCREEN_W_TILES+tileX] = NK_CAST(U8,(*c))+offset;
 
             if (*c == '\n')
             {
