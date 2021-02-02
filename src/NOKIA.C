@@ -39,6 +39,9 @@
 #define NK_SWAP(x,y,t)       do { t tmp__ = x; x = y; y = tmp__; } while (0)
 #define NK_MIN(a,b)          (((a)<(b))?(a):(b))
 #define NK_MAX(a,b)          (((a)>(b))?(a):(b))
+#define NK_FLOOR(f)          NK_CAST(S32,(f))
+#define NK_CEIL(f)           NK_CAST(S32,(f)+1.0f)
+#define NK_ROUND(f)          (((f) < 0.0f) ? NK_CAST(S32,(f)-0.5f) : NK_CAST(S32,(f)+0.5f))
 #define NK_CAST(t,x)         ((t)(x))
 
 typedef  uint8_t  U8;
