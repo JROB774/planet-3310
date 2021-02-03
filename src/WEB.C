@@ -172,6 +172,8 @@ int main (int argc, char** argv)
     context.sounds[NK_SND_SNDTEST ] = Mix_LoadWAV("bin/web/SNDBANK/SNDTEST.WAV" );
     context.sounds[NK_SND_UNREAL  ] = Mix_LoadWAV("bin/web/SNDBANK/UNREAL.WAV"  );
 
+    nkGameStartup(&context.nokia);
+
     emscripten_set_main_loop_arg(SDLMainLoop, &context, 15, 1);
 
     return 0;

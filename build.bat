@@ -10,7 +10,7 @@ if "%~1"=="" (
 
 if %1 == win32 (
     if not exist bin\win32 mkdir bin\win32
-    .tcc\tcc %CompileFlags% -lwinmm -o bin\win32\NOKIA.EXE src\WIN32.C
+    .tcc\tcc %CompileFlags% -D NK_DEBUG -lwinmm -o bin\win32\NOKIA.EXE src\WIN32.C
 )
 if %1 == web (
     if not exist bin\web mkdir bin\web

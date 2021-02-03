@@ -230,6 +230,8 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
     QueryPerformanceFrequency(&perfFrequency);
     QueryPerformanceCounter(&lastCounter);
 
+    nkGameStartup(&nokia);
+
     ShowWindow(hwnd, SW_SHOW);
 
     BOOL running = TRUE;

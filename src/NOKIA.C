@@ -19,7 +19,7 @@
 
 #define NK_SCREEN_TILES (NK_SCREEN_W_TILES*NK_SCREEN_H_TILES)
 
-#define NK_MAX_SPRITES 16
+#define NK_MAX_SPRITES 1024
 
 #define NKAPI static
 
@@ -144,6 +144,7 @@ typedef struct
 {
     nkSND       sound;
     nkSPRITE    spriteList[NK_MAX_SPRITES];
+    U16         sprites;
     U8          tileMap[NK_SCREEN_TILES];
     U8          textMap[NK_SCREEN_TILES];
     U8          mode;
@@ -165,10 +166,10 @@ NKAPI void nkPlaySound (nkCONTEXT* nokia, nkSND snd)
     nokia->sound = snd;
 }
 
-NKAPI void nkSetSprite (nkCONTEXT* nokia, S32 x, S32 y, U8 slot, U8 index)
+NKAPI void nkDrawSprite (nkCONTEXT* nokia, S32 x, S32 y, U8 index)
 {
-    NK_ASSERT(nokia && slot < NK_MAX_SPRITES);
-    nkSPRITE* spr = &nokia->spriteList[slot];
+    NK_ASSERT(nokia && nokia->sprites < NK_MAX_SPRITES);
+    nkSPRITE* spr = &nokia->spriteList[nokia->sprites++];
     spr->x = x, spr->y = y, spr->index = index;
 }
 
@@ -401,6 +402,7 @@ NKAPI B8 nkKeyDown (nkCONTEXT* nokia, nkKEY key)
 NKAPI void nkBeginFrame (nkCONTEXT* nokia)
 {
     NK_ASSERT(nokia);
+    nokia->sprites = 0;
     nkDrawClear(nokia);
 }
 
@@ -453,26 +455,23 @@ NKAPI void nkEndFrame (nkCONTEXT* nokia)
     }
 
     // Sprites draw whether NK_MODE_TILEMAP or NK_MODE_BITMAP.
-    for (S32 i=0; i<NK_MAX_SPRITES; ++i)
+    for (S32 i=0; i<nokia->sprites; ++i)
     {
-        if (nokia->spriteList[i].index)
+        nkSPRITE* spr = &nokia->spriteList[i];
+
+        for (S32 i=0; i<NK_TILE_H; ++i)
         {
-            nkSPRITE* spr = &nokia->spriteList[i];
-
-            for (S32 i=0; i<NK_TILE_H; ++i)
+            U8 row = NK_TILE[(spr->index*NK_TILE_H)+i];
+            for (S32 j=0; j<NK_TILE_W; ++j)
             {
-                U8 row = NK_TILE[(spr->index*NK_TILE_H)+i];
-                for (S32 j=0; j<NK_TILE_W; ++j)
+                if (row & (1 << (7-j)))
                 {
-                    if (row & (1 << (7-j)))
-                    {
-                        S32 x = (spr->x+j);
-                        S32 y = (spr->y+i);
+                    S32 x = (spr->x+j);
+                    S32 y = (spr->y+i);
 
-                        if (x >= 0 && x < NK_SCREEN_W && y >= 0 && y < NK_SCREEN_H)
-                        {
-                            nokia->screen.pixels[y*NK_SCREEN_W+x] = NK_COLOR_1;
-                        }
+                    if (x >= 0 && x < NK_SCREEN_W && y >= 0 && y < NK_SCREEN_H)
+                    {
+                        nokia->screen.pixels[y*NK_SCREEN_W+x] = NK_COLOR_1;
                     }
                 }
             }
