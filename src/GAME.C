@@ -5,12 +5,12 @@
 #define SPR_MONSTR1  8
 #define SPR_EXPLODE 11
 
+#define NUM_ENTITIES 256
+
 #define ENT_PLAYER  0
 #define ENT_PBULLET 1
 #define ENT_MONSTER 2
 #define ENT_EXPLODE 3
-
-#define NUM_ENTITIES 256
 
 typedef struct
 {
