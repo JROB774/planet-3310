@@ -157,7 +157,7 @@ void UpdateExplode (nkCONTEXT* nokia, ENTITY* e)
 //
 // ENT_MONPAWN
 //
-void SpawnMonster (S32 x, S32 y)
+void SpawnMonsterPawn (S32 x, S32 y)
 {
     for (S32 i=0; i<NUM_ENTITIES; ++i)
     {
@@ -178,9 +178,9 @@ void SpawnMonster (S32 x, S32 y)
         }
     }
 }
-void UpdateMonster (nkCONTEXT* nokia, ENTITY* e)
+void UpdateMonsterPawn (nkCONTEXT* nokia, ENTITY* e)
 {
-    e->x -= 5;
+    e->x -= 7;
     if (e->x+(e->sprW*NK_TILE_W) < 0)
     {
         e->active = NK_FALSE;
@@ -204,16 +204,17 @@ void UpdateMonster (nkCONTEXT* nokia, ENTITY* e)
 
 void nkGameStartup (nkCONTEXT* nokia)
 {
+    nkSeedRandom();
     SpawnPlayer(10,20);
 }
 
 void nkGameUpdate (nkCONTEXT* nokia)
 {
-    // Spawn enemies.
+    // Spawn monsters.
     if (gSpawnCounter == 0)
     {
-        SpawnMonster(NK_SCREEN_W, rand()%(NK_SCREEN_H-NK_TILE_H));
-        gSpawnCounter = rand() % 5;
+        SpawnMonsterPawn(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-NK_TILE_H)));
+        gSpawnCounter = nkRandomRangeS32(2,7);
     }
     else
     {
@@ -228,10 +229,10 @@ void nkGameUpdate (nkCONTEXT* nokia)
         {
             switch (e->type)
             {
-                case (ENT_PLAYER ): UpdatePlayer (nokia, e); break;
-                case (ENT_PBULLET): UpdateBullet (nokia, e); break;
-                case (ENT_MONPAWN): UpdateMonster(nokia, e); break;
-                case (ENT_EXPLODE): UpdateExplode(nokia, e); break;
+                case (ENT_PLAYER ): UpdatePlayer     (nokia, e); break;
+                case (ENT_PBULLET): UpdateBullet     (nokia, e); break;
+                case (ENT_MONPAWN): UpdateMonsterPawn(nokia, e); break;
+                case (ENT_EXPLODE): UpdateExplode    (nokia, e); break;
             }
         }
     }
