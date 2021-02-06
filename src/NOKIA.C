@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <time.h>
 #include <string.h>
 #include <assert.h>
 #include <stdarg.h>
@@ -395,6 +396,27 @@ NKAPI B8 nkKeyDown (nkCONTEXT* nokia, nkKEY key)
 {
     NK_ASSERT(nokia && key >= 0 && key < NK_KEY_TOTAL);
     return (nokia->currKeyState[key]);
+}
+
+NKAPI void nkSeedRandom ()
+{
+    srand(NK_CAST(U32, time(NULL)));
+}
+NKAPI S32 nkRandomS32 ()
+{
+    return rand();
+}
+NKAPI S32 nkRandomRangeS32 (S32 min, S32 max)
+{
+    return ((rand() % ((max+1)-min)) + min);
+}
+NKAPI F32 nkRandomF32 ()
+{
+    return (NK_CAST(F32,rand()) / NK_CAST(F32,RAND_MAX));
+}
+NKAPI F32 nkRandomRangeF32 (F32 min, F32 max)
+{
+    return (min + NK_CAST(F32,rand()) / NK_CAST(F32,RAND_MAX/(max-min)));
 }
 
 // Do not call these functions! It is used internally to convert the internal tile, text,
