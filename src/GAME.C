@@ -1,16 +1,19 @@
 #define SPR_PLAYER0  1
 #define SPR_PLAYER1  2
 #define SPR_PBULLET  5
-#define SPR_MONPWN0  7
-#define SPR_MONPWN1  8
-#define SPR_EXPLODE 11
+#define SPR_EXPLODE  6
+#define SPR_MONPWN0  8
+#define SPR_MONPWN1  9
+#define SPR_MONSIN0 12
+#define SPR_MONSIN1 13
 
 #define NUM_ENTITIES 256
 
 #define ENT_PLAYER  0
 #define ENT_PBULLET 1
-#define ENT_MONPAWN 2
-#define ENT_EXPLODE 3
+#define ENT_EXPLODE 2
+#define ENT_MONPAWN 3
+#define ENT_MONSINE 4
 
 typedef struct
 {
@@ -73,7 +76,7 @@ void SpawnBullet (S32 x, S32 y)
                 e->sprW     = 1;
                 e->sprH     = 1;
                 e->frame    = 0;
-                e->frameNum = 2;
+                e->frameNum = 1;
                 e->timer    = 0;
                 e->active   = NK_TRUE;
                 break;
@@ -202,6 +205,18 @@ void UpdateMonsterPawn (nkCONTEXT* nokia, ENTITY* e)
     }
 }
 
+//
+// ENT_MONSINE
+//
+void SpawnMonsterSine (S32 x, S32 y)
+{
+
+}
+void UpdateMonsterSine (nkCONTEXT* nokia, ENTITY* e)
+{
+
+}
+
 void nkGameStartup (nkCONTEXT* nokia)
 {
     nkSeedRandom();
@@ -231,8 +246,9 @@ void nkGameUpdate (nkCONTEXT* nokia)
             {
                 case (ENT_PLAYER ): UpdatePlayer     (nokia, e); break;
                 case (ENT_PBULLET): UpdateBullet     (nokia, e); break;
-                case (ENT_MONPAWN): UpdateMonsterPawn(nokia, e); break;
                 case (ENT_EXPLODE): UpdateExplode    (nokia, e); break;
+                case (ENT_MONPAWN): UpdateMonsterPawn(nokia, e); break;
+                case (ENT_MONSINE): UpdateMonsterSine(nokia, e); break;
             }
         }
     }
