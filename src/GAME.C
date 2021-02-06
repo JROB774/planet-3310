@@ -1,15 +1,15 @@
 #define SPR_PLAYER0  1
 #define SPR_PLAYER1  2
 #define SPR_PBULLET  5
-#define SPR_MONSTR0  7
-#define SPR_MONSTR1  8
+#define SPR_MONPWN0  7
+#define SPR_MONPWN1  8
 #define SPR_EXPLODE 11
 
 #define NUM_ENTITIES 256
 
 #define ENT_PLAYER  0
 #define ENT_PBULLET 1
-#define ENT_MONSTER 2
+#define ENT_MONPAWN 2
 #define ENT_EXPLODE 3
 
 typedef struct
@@ -155,7 +155,7 @@ void UpdateExplode (nkCONTEXT* nokia, ENTITY* e)
 }
 
 //
-// ENT_MONSTER
+// ENT_MONPAWN
 //
 void SpawnMonster (S32 x, S32 y)
 {
@@ -166,8 +166,8 @@ void SpawnMonster (S32 x, S32 y)
         {
             e->x        = x;
             e->y        = y;
-            e->type     = ENT_MONSTER;
-            e->spr      = SPR_MONSTR0;
+            e->type     = ENT_MONPAWN;
+            e->spr      = SPR_MONPWN0;
             e->sprW     = 2;
             e->sprH     = 1;
             e->frame    = 0;
@@ -230,7 +230,7 @@ void nkGameUpdate (nkCONTEXT* nokia)
             {
                 case (ENT_PLAYER ): UpdatePlayer (nokia, e); break;
                 case (ENT_PBULLET): UpdateBullet (nokia, e); break;
-                case (ENT_MONSTER): UpdateMonster(nokia, e); break;
+                case (ENT_MONPAWN): UpdateMonster(nokia, e); break;
                 case (ENT_EXPLODE): UpdateExplode(nokia, e); break;
             }
         }
