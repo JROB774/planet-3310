@@ -385,9 +385,11 @@ void UpdateMonsterBoom (nkCONTEXT* nokia, ENTITY* e)
     }
 }
 
-void StartGame ()
+void StartGame (nkCONTEXT* nokia)
 {
     NK_ZERO_MEM_ARR(gEntities);
+
+    nkClearText(nokia);
 
     gPlayer = gEntities;
     SpawnPlayer(2,(NK_SCREEN_H-NK_TILE_H)/2);
@@ -402,7 +404,7 @@ void StartGame ()
 void nkGameStartup (nkCONTEXT* nokia)
 {
     nkSeedRandom();
-    StartGame();
+    StartGame(nokia);
 }
 
 void nkGameUpdate (nkCONTEXT* nokia)
@@ -423,9 +425,17 @@ void nkGameUpdate (nkCONTEXT* nokia)
     }
     else
     {
-        if (nkKeyPressed(nokia, NK_KEY_SPACE)) // Restart the game if dead.
+        nkClearText(nokia);
+        nkSetText(nokia, 3,2, NK_TRUE, "RETRY?");
+
+        if (nkKeyPressed(nokia, NK_KEY_SPACE))
         {
-            StartGame();
+            StartGame(nokia);
+            return;
+        }
+        else if (nkKeyPressed(nokia, NK_KEY_ESCAPE))
+        {
+            // @Incomplete: Exit to menu...
             return;
         }
     }
@@ -513,7 +523,9 @@ void nkGameUpdate (nkCONTEXT* nokia)
     }
 
     // Update the score.
-    if (gScore > 999999) gScore = 999999;
-    if (gScore < 0) gScore = 0;
-    nkSetText(nokia, 3,0, NK_FALSE, "%06d", gScore);
+    if (gPlayer->active)
+    {
+        gScore = NK_CLAMP(gScore, 0, 999999);
+        nkSetText(nokia, 3,0, NK_FALSE, "%06d", gScore);
+    }
 }
