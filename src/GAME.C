@@ -14,6 +14,7 @@
 #define SPR_POWER11  0x54
 #define SPR_POWER21  0x58
 #define SPR_POWER31  0x5C
+#define SPR_PSHIELD  0x60
 
 #define ENT_EXPLODE  0x00
 #define ENT_PBULLET  0x01
@@ -266,10 +267,17 @@ void UpdatePlayer (nkCONTEXT* nokia, ENTITY* e)
         {
             if (CheckCollision(e,e2))
             {
-                gPlayer->active = NK_FALSE;
-                SpawnExplode(gPlayer->x+(NK_TILE_W/2),gPlayer->y);
-                nkPlaySound(nokia, NK_SND_NEGTIV01);
-                SaveScore(gScore);
+                if (gPowerup == POW_SHIELD)
+                {
+                    gPowerup = POW_NONE;
+                }
+                else
+                {
+                    gPlayer->active = NK_FALSE;
+                    SpawnExplode(gPlayer->x+(NK_TILE_W/2),gPlayer->y);
+                    nkPlaySound(nokia, NK_SND_NEGTIV01);
+                    SaveScore(gScore);
+                }
                 break;
             }
         }
@@ -701,15 +709,55 @@ void UpdateGame (nkCONTEXT* nokia)
         }
         if (nkKeyPressed(nokia, NK_KEY_SPACE))
         {
-            /*
-            nkPlaySound(nokia, NK_SND_BLIP05);
             switch (option)
             {
-                case (MENU_OPSTART): StartGame(nokia);         break;
-                case (MENU_OPSCORE): gGameMode = GMODE_SCORES; break;
-                case (MENU_OPEXIT ): nkExit(nokia);            break;
+                case (POW_NONE):
+                {
+                    if (gPowerup != POW_SHIELD) // Shield persists!
+                    {
+                        gPowerup = POW_NONE;
+                    }
+                } break;
+                case (POW_SHIELD):
+                {
+                    if (gScore >= 900)
+                    {
+                        if (gPowerup != POW_SHIELD)
+                        {
+                            gPowerup = POW_SHIELD;
+                            gScore -= 900;
+                        }
+                    }
+                    else
+                    {
+                        return;
+                    }
+                } break;
+                case (POW_BOOST):
+                {
+                    if (gScore >= 500)
+                    {
+                        gPowerup = POW_BOOST;
+                        gScore -= 500;
+                    }
+                    else
+                    {
+                        return;
+                    }
+                } break;
+                case (POW_SPREAD):
+                {
+                    if (gScore >= 700)
+                    {
+                        gPowerup = POW_SPREAD;
+                        gScore -= 700;
+                    }
+                    else
+                    {
+                        return;
+                    }
+                } break;
             }
-            */
 
             nkClearTiles(nokia);
             nkClearText(nokia);
@@ -766,19 +814,22 @@ void UpdateGame (nkCONTEXT* nokia)
     if (gPaused) return;
 
     // Manage waves.
-    if (gWaveCounter >= gWaveMaxTime)
+    if (gPlayer->active)
     {
-        gWaveCounter = 0;
-        gWave++;
-        gShop = NK_TRUE;
-        if (gWave % 5 == 0) // Increase wave length every 5 waves.
+        if (gWaveCounter >= gWaveMaxTime)
         {
-            gWaveMaxTime += 75;
+            gWaveCounter = 0;
+            gWave++;
+            gShop = NK_TRUE;
+            if (gWave % 5 == 0) // Increase wave length every 5 waves.
+            {
+                gWaveMaxTime += 75;
+            }
         }
-    }
-    else
-    {
-        gWaveCounter++;
+        else
+        {
+            gWaveCounter++;
+        }
     }
 
     // Spawn monsters.
@@ -866,6 +917,15 @@ void UpdateGame (nkCONTEXT* nokia)
                 }
             }
         }
+    }
+
+    // Draw the shield if the player has it.
+    if (gPlayer->active && gPowerup == POW_SHIELD)
+    {
+        nkDrawSprite(nokia, gPlayer->x,          gPlayer->y          -4, SPR_PSHIELD+0);
+        nkDrawSprite(nokia, gPlayer->x+NK_TILE_W,gPlayer->y          -4, SPR_PSHIELD+1);
+        nkDrawSprite(nokia, gPlayer->x,          gPlayer->y+NK_TILE_H-4, SPR_PSHIELD+2);
+        nkDrawSprite(nokia, gPlayer->x+NK_TILE_W,gPlayer->y+NK_TILE_H-4, SPR_PSHIELD+3);
     }
 
     // Update the score.
