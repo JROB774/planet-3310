@@ -83,7 +83,7 @@ void SaveScore (U32 score)
     }
     if (index != -1)
     {
-        for (U8 i=NK_ARRAY_SIZE(gScores); i>0; --i) // Move everything down.
+        for (U8 i=NK_ARRAY_SIZE(gScores)-1; i>0; --i) // Move everything down.
         {
             gScores[i] = gScores[i-1];
         }
