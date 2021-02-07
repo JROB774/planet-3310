@@ -4,13 +4,24 @@
 #define SPR_MONPAWN  0x08
 #define SPR_MONSINE  0x0C
 #define SPR_MONBOOM  0x10
+#define SPR_MONBLOB  0x1C
 
 #define ENT_EXPLODE  0x00
 #define ENT_PBULLET  0x01
 #define ENT_PLAYER   0x02
 #define ENT_MONPAWN  0x03
 #define ENT_MONSINE  0x04
-#define ENT_MONBOOM  0x05
+#define ENT_MONBLOB  0x05
+#define ENT_MONBOOM  0x06
+
+#define DIR_N        0x00
+#define DIR_NE       0x01
+#define DIR_E        0x02
+#define DIR_SE       0x03
+#define DIR_S        0x04
+#define DIR_SW       0x05
+#define DIR_W        0x06
+#define DIR_NW       0x07
 
 #define NUM_ENTITIES 0xFF
 
@@ -27,6 +38,7 @@ typedef struct
     U8 frameNum;
     U8 timer;
     B8 active;
+    U8 extra;
 
 } ENTITY;
 
@@ -185,7 +197,9 @@ void UpdatePlayer (nkCONTEXT* nokia, ENTITY* e)
     {
         ENTITY* e2 = &gEntities[i];
         if (e2->active && (e2->type == ENT_MONPAWN ||
-                           e2->type == ENT_MONSINE))
+                           e2->type == ENT_MONSINE ||
+                           e2->type == ENT_MONBLOB ||
+                           e2->type == ENT_MONBOOM))
         {
             if (CheckCollision(e,e2))
             {
@@ -322,6 +336,51 @@ void UpdateMonsterSine (nkCONTEXT* nokia, ENTITY* e)
 }
 
 //
+// ENT_MONBLOB
+//
+void SpawnMonsterBlob (S32 x, S32 y, U8 dir)
+{
+    for (S32 i=1; i<NUM_ENTITIES; ++i)
+    {
+        ENTITY* e = &gEntities[i];
+        if (!e->active)
+        {
+            e->x        = x;
+            e->y        = y;
+            e->hits     = 0;
+            e->type     = ENT_MONBLOB;
+            e->spr      = SPR_MONBLOB;
+            e->sprW     = 1;
+            e->sprH     = 1;
+            e->frame    = 0;
+            e->frameNum = 4;
+            e->timer    = 0;
+            e->active   = NK_TRUE;
+            e->extra    = dir;
+            break;
+        }
+    }
+}
+void UpdateMonsterBlob (nkCONTEXT* nokia, ENTITY* e)
+{
+    if ((e->x >= NK_SCREEN_W)          ||
+        (e->x+(e->sprW*NK_TILE_W) < 0) ||
+        (e->y >= NK_SCREEN_H)          ||
+        (e->y+(e->sprH*NK_TILE_H) < 0))
+    {
+        e->active = NK_FALSE;
+    }
+
+    switch (e->extra)
+    {
+        case (DIR_N): e->y -= 4; break;
+        case (DIR_E): e->x += 4; break;
+        case (DIR_S): e->y += 4; break;
+        case (DIR_W): e->x -= 4; break;
+    }
+}
+
+//
 // ENT_MONBOOM
 //
 void SpawnMonsterBoom (S32 x, S32 y)
@@ -377,6 +436,10 @@ void UpdateMonsterBoom (nkCONTEXT* nokia, ENTITY* e)
                     SpawnExplode(e->x+NK_TILE_W,e->y);
                     SpawnExplode(e->x,          e->y+NK_TILE_H);
                     SpawnExplode(e->x+NK_TILE_W,e->y+NK_TILE_H);
+                    SpawnMonsterBlob(e->x,e->y, DIR_N);
+                    SpawnMonsterBlob(e->x,e->y, DIR_E);
+                    SpawnMonsterBlob(e->x,e->y, DIR_S);
+                    SpawnMonsterBlob(e->x,e->y, DIR_W);
                     gScore += 100;
                     break;
                 }
@@ -487,6 +550,7 @@ void nkGameUpdate (nkCONTEXT* nokia)
                 case (ENT_PLAYER ): UpdatePlayer     (nokia, e); break;
                 case (ENT_MONPAWN): UpdateMonsterPawn(nokia, e); break;
                 case (ENT_MONSINE): UpdateMonsterSine(nokia, e); break;
+                case (ENT_MONBLOB): UpdateMonsterBlob(nokia, e); break;
                 case (ENT_MONBOOM): UpdateMonsterBoom(nokia, e); break;
             }
         }
