@@ -1,5 +1,5 @@
-#define SPR_PLAYER0  0x01
-#define SPR_PBULLET  0x05
+#define SPR_PLAYER0  0x00
+#define SPR_PBULLET  0x04
 #define SPR_EXPLODE  0x06
 #define SPR_MONPAWN  0x08
 #define SPR_MONSINE  0x0C
