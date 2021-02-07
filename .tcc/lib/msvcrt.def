@@ -264,6 +264,7 @@ _endthreadex
 _environ
 _eof
 _errno
+_except_handler3
 _execl
 _execle
 _execlp

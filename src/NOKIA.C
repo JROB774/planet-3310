@@ -436,7 +436,7 @@ NKAPI F32 nkRandomRangeF32 (F32 min, F32 max)
 NKAPI F32 nkSinRange (F32 min, F32 max, F32 t)
 {
     F32 half = (max - min) / 2;
-    return min + half + sinf(t) * half;
+    return min + half + sin(t) * half;
 }
 
 NKAPI void nkExit (nkCONTEXT* nokia)
