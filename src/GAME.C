@@ -32,7 +32,8 @@ typedef struct
 
 static ENTITY  gEntities[NUM_ENTITIES];
 static ENTITY* gPlayer = gEntities;
-static U32     gSpawnCounter = 0;
+static U32     gSpawnPawnCounter = 0;
+static U32     gSpawnSineCounter = 0;
 static S32     gScore = 0;
 
 U32 GetEntityTypeCount (U8 type)
@@ -242,30 +243,92 @@ void UpdateMonsterPawn (nkCONTEXT* nokia, ENTITY* e)
 //
 void SpawnMonsterSine (S32 x, S32 y)
 {
-    // @Incomplete: ...
+    for (S32 i=1; i<NUM_ENTITIES; ++i)
+    {
+        ENTITY* e = &gEntities[i];
+        if (!e->active)
+        {
+            e->x        = x;
+            e->y        = y;
+            e->type     = ENT_MONSINE;
+            e->spr      = SPR_MONSIN0;
+            e->sprW     = 2;
+            e->sprH     = 1;
+            e->frame    = 0;
+            e->frameNum = 2;
+            e->timer    = 0;
+            e->active   = NK_TRUE;
+            break;
+        }
+    }
 }
 void UpdateMonsterSine (nkCONTEXT* nokia, ENTITY* e)
 {
-    // @Incomplete: ...
+    e->x -= 7;
+    e->y = nkSinRange(0, NK_SCREEN_H-NK_TILE_H, NK_CAST(F32,nokia->frame)/4);
+    if (e->x+(e->sprW*NK_TILE_W) < 0)
+    {
+        e->active = NK_FALSE;
+        if (gPlayer->active)
+        {
+            gScore -= 10;
+        }
+    }
+
+    for (S32 i=1; i<NUM_ENTITIES; ++i)
+    {
+        ENTITY* e2 = &gEntities[i];
+        if (e2->active && e2->type == ENT_PBULLET)
+        {
+            if (CheckCollision(e,e2))
+            {
+                e->active = NK_FALSE;
+                SpawnExplode(e->x+(NK_TILE_W/2),e->y);
+                if (gPlayer->active) // So it doesn't override the death sound.
+                {
+                    nkPlaySound(nokia, NK_SND_HIT01);
+                }
+                gScore += 30;
+                break;
+            }
+        }
+    }
+}
+
+void StartGame ()
+{
+    SpawnPlayer(2,(NK_SCREEN_H-NK_TILE_H)/2);
+
+    gSpawnPawnCounter = 20;
+    gSpawnSineCounter = 240;
 }
 
 void nkGameStartup (nkCONTEXT* nokia)
 {
     nkSeedRandom();
-    SpawnPlayer(10,20);
+    StartGame();
 }
 
 void nkGameUpdate (nkCONTEXT* nokia)
 {
     // Spawn monsters.
-    if (gSpawnCounter == 0)
+    if (gSpawnPawnCounter == 0) // ENT_MONPAWN
     {
         SpawnMonsterPawn(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-NK_TILE_H)));
-        gSpawnCounter = nkRandomRangeS32(2,7);
+        gSpawnPawnCounter = nkRandomRangeS32(4,8);
     }
     else
     {
-        gSpawnCounter--;
+        gSpawnPawnCounter--;
+    }
+    if (gSpawnSineCounter == 0) // ENT_MONSINE
+    {
+        SpawnMonsterSine(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-NK_TILE_H)));
+        gSpawnSineCounter = nkRandomRangeS32(8,15);
+    }
+    else
+    {
+        gSpawnSineCounter--;
     }
 
     // Update entities.

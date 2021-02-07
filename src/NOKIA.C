@@ -4,6 +4,7 @@
 #include <time.h>
 #include <string.h>
 #include <assert.h>
+#include <math.h>
 #include <stdarg.h>
 
 #define NK_SCREEN_W 84
@@ -417,6 +418,12 @@ NKAPI F32 nkRandomF32 ()
 NKAPI F32 nkRandomRangeF32 (F32 min, F32 max)
 {
     return (min + NK_CAST(F32,rand()) / NK_CAST(F32,RAND_MAX/(max-min)));
+}
+
+NKAPI F32 nkSinRange (F32 min, F32 max, F32 t)
+{
+    F32 half = (max - min) / 2;
+    return min + half + sinf(t) * half;
 }
 
 // Do not call these functions! It is used internally to convert the internal tile, text,
