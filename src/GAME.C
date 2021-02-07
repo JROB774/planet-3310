@@ -229,6 +229,10 @@ void UpdatePlayer (nkCONTEXT* nokia, ENTITY* e)
     static S8 bulletCooldown = 0;
 
     U8 playerSpeed = 3;
+    if (gPowerup == POW_BOOST)
+    {
+        playerSpeed = 4;
+    }
 
     if (nkKeyDown(nokia, NK_KEY_W)) gPlayer->y -= playerSpeed;
     if (nkKeyDown(nokia, NK_KEY_A)) gPlayer->x -= playerSpeed;
@@ -248,7 +252,15 @@ void UpdatePlayer (nkCONTEXT* nokia, ENTITY* e)
     {
         if (nkKeyDown(nokia, NK_KEY_SPACE))
         {
-            SpawnBullet(gPlayer->x+(NK_TILE_W*2)-3,gPlayer->y);
+            if (gPowerup == POW_SPREAD)
+            {
+                // @Incomplete: ...
+            }
+            else
+            {
+                SpawnBullet(gPlayer->x+(NK_TILE_W*2)-3,gPlayer->y);
+            }
+
             bulletCooldown = 2;
         }
     }
