@@ -211,6 +211,10 @@ void UpdateMonsterPawn (nkCONTEXT* nokia, ENTITY* e)
     if (e->x+(e->sprW*NK_TILE_W) < 0)
     {
         e->active = NK_FALSE;
+        if (gPlayer->active)
+        {
+            gScore -= 10;
+        }
     }
 
     for (S32 i=1; i<NUM_ENTITIES; ++i)
