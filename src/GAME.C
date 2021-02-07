@@ -23,6 +23,14 @@
 #define DIR_W        0x06
 #define DIR_NW       0x07
 
+#define GMODE_MENU   0x00
+#define GMODE_SCORES 0x01
+#define GMODE_GAME   0x02
+
+#define MENU_OPSTART 0x00
+#define MENU_OPSCORE 0x01
+#define MENU_OPEXIT  0x02
+
 #define NUM_ENTITIES 0xFF
 
 typedef struct
@@ -49,6 +57,7 @@ static U32     gSpawnSineCounter;
 static U32     gSpawnBoomCounter;
 static B8      gPaused;
 static S32     gScore;
+static U8      gGameMode;
 
 U32 GetEntityTypeCount (U8 type)
 {
@@ -111,28 +120,25 @@ void UpdateExplode (nkCONTEXT* nokia, ENTITY* e)
 //
 void SpawnBullet (S32 x, S32 y)
 {
-    // if (GetEntityTypeCount(ENT_PBULLET) < 5)
-    // {
-        for (S32 i=1; i<NUM_ENTITIES; ++i)
+    for (S32 i=1; i<NUM_ENTITIES; ++i)
+    {
+        ENTITY* e = &gEntities[i];
+        if (!e->active)
         {
-            ENTITY* e = &gEntities[i];
-            if (!e->active)
-            {
-                e->x        = x;
-                e->y        = y;
-                e->hits     = 0;
-                e->type     = ENT_PBULLET;
-                e->spr      = SPR_PBULLET;
-                e->sprW     = 1;
-                e->sprH     = 1;
-                e->frame    = 0;
-                e->frameNum = 1;
-                e->timer    = 0;
-                e->active   = NK_TRUE;
-                break;
-            }
+            e->x        = x;
+            e->y        = y;
+            e->hits     = 0;
+            e->type     = ENT_PBULLET;
+            e->spr      = SPR_PBULLET;
+            e->sprW     = 1;
+            e->sprH     = 1;
+            e->frame    = 0;
+            e->frameNum = 1;
+            e->timer    = 0;
+            e->active   = NK_TRUE;
+            break;
         }
-    // }
+    }
 }
 void UpdateBullet (nkCONTEXT* nokia, ENTITY* e)
 {
@@ -450,8 +456,11 @@ void UpdateMonsterBoom (nkCONTEXT* nokia, ENTITY* e)
 
 void StartGame (nkCONTEXT* nokia)
 {
+    gGameMode = GMODE_GAME;
+
     NK_ZERO_MEM_ARR(gEntities);
 
+    nkClearTiles(nokia);
     nkClearText(nokia);
 
     gPlayer = gEntities;
@@ -464,13 +473,74 @@ void StartGame (nkCONTEXT* nokia)
     gSpawnBoomCounter = 500;
 }
 
-void nkGameStartup (nkCONTEXT* nokia)
+void UpdateMenu (nkCONTEXT* nokia)
 {
-    nkSeedRandom();
-    StartGame(nokia);
+    static S8 option = MENU_OPSTART;
+
+    nkClearText(nokia);
+
+    nkSetText(nokia, 0,0, NK_FALSE, "SPACE ATTACK");
+    nkSetText(nokia, 3,3, (option == MENU_OPSTART), "ATTACK");
+    nkSetText(nokia, 3,4, (option == MENU_OPSCORE), "SCORES");
+    nkSetText(nokia, 4,5, (option == MENU_OPEXIT ), "EXIT"  );
+
+    // Menu controls.
+    if (nkKeyPressed(nokia, NK_KEY_W))
+    {
+        option--;
+        if (option < MENU_OPSTART)
+        {
+            option = MENU_OPEXIT;
+        }
+    }
+    if (nkKeyPressed(nokia, NK_KEY_S))
+    {
+        option++;
+        if (option > MENU_OPEXIT)
+        {
+            option = MENU_OPSTART;
+        }
+    }
+    if (nkKeyPressed(nokia, NK_KEY_SPACE))
+    {
+        nkPlaySound(nokia, NK_SND_BLIP05);
+        switch (option)
+        {
+            case (MENU_OPSTART): StartGame(nokia);         break;
+            case (MENU_OPSCORE): gGameMode = GMODE_SCORES; break;
+            case (MENU_OPEXIT ): nkExit(nokia);            break;
+        }
+    }
+    if (nkKeyPressed(nokia, NK_KEY_ESCAPE))
+    {
+        nkExit(nokia);
+    }
 }
 
-void nkGameUpdate (nkCONTEXT* nokia)
+void UpdateScores (nkCONTEXT* nokia)
+{
+    nkClearText(nokia);
+
+    nkSetText(nokia, 3,0, NK_FALSE, "000000");
+    nkSetText(nokia, 3,1, NK_FALSE, "000000");
+    nkSetText(nokia, 3,2, NK_FALSE, "000000");
+    nkSetText(nokia, 3,3, NK_FALSE, "000000");
+    nkSetText(nokia, 3,4, NK_FALSE, "000000");
+    nkSetText(nokia, 3,5, NK_FALSE, "000000");
+
+    // Score controls.
+    if (nkKeyPressed(nokia, NK_KEY_SPACE))
+    {
+        nkPlaySound(nokia, NK_SND_BLIP05);
+        gGameMode = GMODE_MENU;
+    }
+    if (nkKeyPressed(nokia, NK_KEY_ESCAPE))
+    {
+        nkExit(nokia);
+    }
+}
+
+void UpdateGame (nkCONTEXT* nokia)
 {
     // Global game controls.
     if (gPlayer->active)
@@ -591,5 +661,21 @@ void nkGameUpdate (nkCONTEXT* nokia)
     {
         gScore = NK_CLAMP(gScore, 0, 999999);
         nkSetText(nokia, 3,0, NK_FALSE, "%06d", gScore);
+    }
+}
+
+void nkGameStartup (nkCONTEXT* nokia)
+{
+    gGameMode = GMODE_MENU;
+    nkSeedRandom();
+}
+
+void nkGameUpdate (nkCONTEXT* nokia)
+{
+    switch (gGameMode)
+    {
+        case (GMODE_MENU  ): UpdateMenu  (nokia); break;
+        case (GMODE_SCORES): UpdateScores(nokia); break;
+        case (GMODE_GAME  ): UpdateGame  (nokia); break;
     }
 }

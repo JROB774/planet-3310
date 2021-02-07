@@ -36,6 +36,7 @@
 #define NK_ZERO_MEM_PTR(x)   memset( (x), 0, sizeof(*(x)))
 #define NK_ZERO_MEM_ARR(x)   memset( (x), 0, sizeof( (x)))
 #define NK_ARRAY_SIZE(a)     (sizeof(a)/(sizeof((a)[0])))
+#define NK_MEMSET(p,x,s)     memset(p,x,s)
 #define NK_CLAMP(x,low,high) (((x)>(high))?(high):(((x)<(low))?(low):(x)))
 #define NK_ABS(a)            (((a)<0)?-(a):(a))
 #define NK_SWAP(x,y,t)       do { t tmp__ = x; x = y; y = tmp__; } while (0)
@@ -159,6 +160,7 @@ typedef struct
     S32         viewportY;
     S32         viewportW;
     S32         viewportH;
+    B8          exit;
 
 } nkCONTEXT;
 
@@ -217,8 +219,14 @@ NKAPI void nkSetText (nkCONTEXT* nokia, S32 tileX, S32 tileY, B8 invert, const c
     }
 }
 
+NKAPI void nkClearTiles (nkCONTEXT* nokia)
+{
+    NK_ASSERT(nokia);
+    NK_ZERO_MEM_ARR(nokia->tileMap);
+}
 NKAPI void nkClearText (nkCONTEXT* nokia)
 {
+    NK_ASSERT(nokia);
     NK_ZERO_MEM_ARR(nokia->textMap);
 }
 
@@ -429,6 +437,12 @@ NKAPI F32 nkSinRange (F32 min, F32 max, F32 t)
 {
     F32 half = (max - min) / 2;
     return min + half + sinf(t) * half;
+}
+
+NKAPI void nkExit (nkCONTEXT* nokia)
+{
+    NK_ASSERT(nokia);
+    nokia->exit = NK_TRUE;
 }
 
 // Do not call these functions! It is used internally to convert the internal tile, text,

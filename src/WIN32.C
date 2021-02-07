@@ -320,6 +320,11 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
             nokia.sound = NK_SND_NONE; // Reset the sound after playing it.
         }
 
+        if (nokia.exit)
+        {
+            running = FALSE;
+        }
+
         HDC hdc = GetDC(hwnd);
         WinUpdateDisplay(hwnd, hdc, &nokia);
         ReleaseDC(hwnd, hdc);
