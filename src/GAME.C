@@ -35,6 +35,7 @@ static ENTITY* gPlayer;
 static U32     gSpawnPawnCounter;
 static U32     gSpawnSineCounter;
 static U32     gSpawnBoomCounter;
+static B8      gPaused;
 static S32     gScore;
 
 U32 GetEntityTypeCount (U8 type)
@@ -406,42 +407,60 @@ void nkGameStartup (nkCONTEXT* nokia)
 
 void nkGameUpdate (nkCONTEXT* nokia)
 {
-    // Spawn monsters.
-    if (gSpawnPawnCounter == 0) // ENT_MONPAWN
-    {
-        SpawnMonsterPawn(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-NK_TILE_H)));
-        gSpawnPawnCounter = nkRandomRangeS32(4,8);
-    }
-    else
-    {
-        gSpawnPawnCounter--;
-    }
-    if (gSpawnSineCounter == 0) // ENT_MONSINE
-    {
-        SpawnMonsterSine(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-NK_TILE_H)));
-        gSpawnSineCounter = nkRandomRangeS32(8,15);
-    }
-    else
-    {
-        gSpawnSineCounter--;
-    }
-    if (gSpawnBoomCounter == 0) // ENT_MONBOOM
-    {
-        SpawnMonsterBoom(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-(NK_TILE_H*2))));
-        gSpawnBoomCounter = nkRandomRangeS32(50,120);
-    }
-    else
-    {
-        gSpawnBoomCounter--;
-    }
-
     // Global game controls.
-    if (!gPlayer->active)
+    if (gPlayer->active)
+    {
+        if (nkKeyPressed(nokia, NK_KEY_ESCAPE))
+        {
+            nkPlaySound(nokia, NK_SND_BLIP06);
+            gPaused = !gPaused;
+            nkClearText(nokia);
+            if (gPaused)
+            {
+                nkSetText(nokia, 3,2, NK_TRUE, "PAUSED");
+            }
+        }
+    }
+    else
     {
         if (nkKeyPressed(nokia, NK_KEY_SPACE)) // Restart the game if dead.
         {
             StartGame();
             return;
+        }
+    }
+
+    if (gPaused) return;
+
+    // Spawn monsters.
+    if (gPlayer->active)
+    {
+        if (gSpawnPawnCounter == 0) // ENT_MONPAWN
+        {
+            SpawnMonsterPawn(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-NK_TILE_H)));
+            gSpawnPawnCounter = nkRandomRangeS32(4,8);
+        }
+        else
+        {
+            gSpawnPawnCounter--;
+        }
+        if (gSpawnSineCounter == 0) // ENT_MONSINE
+        {
+            SpawnMonsterSine(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-NK_TILE_H)));
+            gSpawnSineCounter = nkRandomRangeS32(8,15);
+        }
+        else
+        {
+            gSpawnSineCounter--;
+        }
+        if (gSpawnBoomCounter == 0) // ENT_MONBOOM
+        {
+            SpawnMonsterBoom(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-(NK_TILE_H*2))));
+            gSpawnBoomCounter = nkRandomRangeS32(50,120);
+        }
+        else
+        {
+            gSpawnBoomCounter--;
         }
     }
 

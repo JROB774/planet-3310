@@ -217,6 +217,11 @@ NKAPI void nkSetText (nkCONTEXT* nokia, S32 tileX, S32 tileY, B8 invert, const c
     }
 }
 
+NKAPI void nkClearText (nkCONTEXT* nokia)
+{
+    NK_ZERO_MEM_ARR(nokia->textMap);
+}
+
 NKAPI void nkDrawClear (nkCONTEXT* nokia)
 {
     for (S32 i=0, n=(NK_SCREEN_W*NK_SCREEN_H); i<n; ++i)
