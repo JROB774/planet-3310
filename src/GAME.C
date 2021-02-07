@@ -516,9 +516,19 @@ void UpdateMenu (nkCONTEXT* nokia)
 {
     static S8 option = MENU_OPSTART;
 
+    nkClearTiles(nokia);
     nkClearText(nokia);
 
-    nkSetText(nokia, 0,0, NK_FALSE, "SPACE ATTACK");
+    U8 tileIndex = 0xE0;
+    for (U8 iy=0; iy<2; ++iy)
+    {
+        for (U8 ix=0; ix<12; ++ix)
+        {
+            nokia->tileMap[iy*NK_SCREEN_W_TILES+ix] = tileIndex;
+            tileIndex++;
+        }
+    }
+
     nkSetText(nokia, 3,3, (option == MENU_OPSTART), "ATTACK");
     nkSetText(nokia, 3,4, (option == MENU_OPSCORE), "SCORES");
     nkSetText(nokia, 4,5, (option == MENU_OPEXIT ), "EXIT"  );
@@ -558,6 +568,7 @@ void UpdateMenu (nkCONTEXT* nokia)
 
 void UpdateScores (nkCONTEXT* nokia)
 {
+    nkClearTiles(nokia);
     nkClearText(nokia);
 
     for (U8 i=0; i<NK_ARRAY_SIZE(gScores); ++i)
@@ -583,6 +594,7 @@ void UpdateGame (nkCONTEXT* nokia)
         {
             nkPlaySound(nokia, NK_SND_BLIP06);
             gPaused = !gPaused;
+            nkClearTiles(nokia);
             nkClearText(nokia);
             if (gPaused)
             {
@@ -592,6 +604,7 @@ void UpdateGame (nkCONTEXT* nokia)
     }
     else
     {
+        nkClearTiles(nokia);
         nkClearText(nokia);
         nkSetText(nokia, 3,2, NK_TRUE, "RETRY?");
 

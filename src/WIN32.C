@@ -177,7 +177,7 @@ int APIENTRY WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pCmdLin
     LONG windowWidth = rwWindow.right - rwWindow.left;
     LONG windowHeight = rwWindow.bottom - rwWindow.top;
 
-    HWND hwnd = CreateWindowExA(0, windowClass.lpszClassName, "NOKIA", WS_OVERLAPPEDWINDOW,
+    HWND hwnd = CreateWindowExA(0, windowClass.lpszClassName, "PLANET 3310", WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, windowWidth, windowHeight, 0, 0, windowClass.hInstance, 0);
     if (!hwnd)
     {
