@@ -56,8 +56,46 @@ static U32     gSpawnPawnCounter;
 static U32     gSpawnSineCounter;
 static U32     gSpawnBoomCounter;
 static B8      gPaused;
+static U32     gScores[6];
 static S32     gScore;
 static U8      gGameMode;
+
+void LoadScores ()
+{
+    NK_ZERO_MEM_ARR(gScores);
+    FILE* file = fopen("SAVE.DAT", "rb");
+    if (!file) return;
+    fread(gScores, sizeof(gScores), 1, file);
+    fclose(file);
+}
+
+void SaveScore (U32 score)
+{
+    // Place the score if it's a highscore.
+    S8 index = -1;
+    for (U8 i=0; i<NK_ARRAY_SIZE(gScores); ++i)
+    {
+        if (score > gScores[i])
+        {
+            index = i;
+            break;
+        }
+    }
+    if (index != -1)
+    {
+        for (U8 i=NK_ARRAY_SIZE(gScores); i>0; --i) // Move everything down.
+        {
+            gScores[i] = gScores[i-1];
+        }
+        gScores[index] = score;
+    }
+
+    // Save the scores.
+    FILE* file = fopen("SAVE.DAT", "wb");
+    if (!file) return;
+    fwrite(gScores, sizeof(gScores), 1, file);
+    fclose(file);
+}
 
 U32 GetEntityTypeCount (U8 type)
 {
@@ -212,6 +250,7 @@ void UpdatePlayer (nkCONTEXT* nokia, ENTITY* e)
                 gPlayer->active = NK_FALSE;
                 SpawnExplode(gPlayer->x+(NK_TILE_W/2),gPlayer->y);
                 nkPlaySound(nokia, NK_SND_NEGTIV01);
+                SaveScore(gScore);
                 break;
             }
         }
@@ -521,12 +560,10 @@ void UpdateScores (nkCONTEXT* nokia)
 {
     nkClearText(nokia);
 
-    nkSetText(nokia, 3,0, NK_FALSE, "000000");
-    nkSetText(nokia, 3,1, NK_FALSE, "000000");
-    nkSetText(nokia, 3,2, NK_FALSE, "000000");
-    nkSetText(nokia, 3,3, NK_FALSE, "000000");
-    nkSetText(nokia, 3,4, NK_FALSE, "000000");
-    nkSetText(nokia, 3,5, NK_FALSE, "000000");
+    for (U8 i=0; i<NK_ARRAY_SIZE(gScores); ++i)
+    {
+        nkSetText(nokia, 3,i, NK_FALSE, "%06d", gScores[i]);
+    }
 
     // Score controls.
     if (nkKeyPressed(nokia, NK_KEY_SPACE) ||
@@ -667,6 +704,7 @@ void nkGameStartup (nkCONTEXT* nokia)
 {
     gGameMode = GMODE_MENU;
     nkSeedRandom();
+    LoadScores();
 }
 
 void nkGameUpdate (nkCONTEXT* nokia)
