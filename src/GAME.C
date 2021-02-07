@@ -1,10 +1,19 @@
 #define SPR_PLAYER0  0x00
 #define SPR_PBULLET  0x04
+#define SPR_SBULLET  0x05
 #define SPR_EXPLODE  0x06
 #define SPR_MONPAWN  0x08
 #define SPR_MONSINE  0x0C
 #define SPR_MONBOOM  0x10
 #define SPR_MONBLOB  0x1C
+#define SPR_POWER00  0x40
+#define SPR_POWER10  0x44
+#define SPR_POWER20  0x48
+#define SPR_POWER30  0x4C
+#define SPR_POWER01  0x50
+#define SPR_POWER11  0x54
+#define SPR_POWER21  0x58
+#define SPR_POWER31  0x5C
 
 #define ENT_EXPLODE  0x00
 #define ENT_PBULLET  0x01
@@ -30,6 +39,11 @@
 #define MENU_OPSTART 0x00
 #define MENU_OPSCORE 0x01
 #define MENU_OPEXIT  0x02
+
+#define POW_NONE     0x00
+#define POW_SHIELD   0x01
+#define POW_BOOST    0x02
+#define POW_SPREAD   0x03
 
 #define NUM_ENTITIES 0xFF
 
@@ -59,6 +73,11 @@ static B8      gPaused;
 static U32     gScores[6];
 static S32     gScore;
 static U8      gGameMode;
+static U8      gPowerup;
+static U32     gWave;
+static U32     gWaveCounter;
+static U32     gWaveMaxTime;
+static B8      gShop;
 
 void LoadScores ()
 {
@@ -505,11 +524,16 @@ void StartGame (nkCONTEXT* nokia)
     gPlayer = gEntities;
     SpawnPlayer(2,(NK_SCREEN_H-NK_TILE_H)/2);
 
+    gPowerup = POW_NONE;
     gScore = 0;
+    gWave = 0;
+    gWaveCounter = 0;
+    gWaveMaxTime = 225;
+    gShop = NK_FALSE;
 
-    gSpawnPawnCounter =  20;
-    gSpawnSineCounter = 240;
-    gSpawnBoomCounter = 500;
+    gSpawnPawnCounter = 20;
+    gSpawnSineCounter = 45;
+    gSpawnBoomCounter = 45;
 }
 
 void UpdateMenu (nkCONTEXT* nokia)
@@ -519,7 +543,7 @@ void UpdateMenu (nkCONTEXT* nokia)
     nkClearTiles(nokia);
     nkClearText(nokia);
 
-    U8 tileIndex = 0xE0;
+    U8 tileIndex = 0x20;
     for (U8 iy=0; iy<2; ++iy)
     {
         for (U8 ix=0; ix<12; ++ix)
@@ -587,6 +611,123 @@ void UpdateScores (nkCONTEXT* nokia)
 
 void UpdateGame (nkCONTEXT* nokia)
 {
+    // Updat the shop.
+    if (gShop)
+    {
+        static S8 option = 0;
+
+        nkClearTiles(nokia);
+        nkClearText(nokia);
+
+        nkSetText(nokia, 1,0, NK_FALSE, "!POWER UP!");
+        nkSetText(nokia, 3,1, NK_FALSE, "%06d", gScore);
+
+        // POW_NONE
+        nokia->tileMap[2*NK_SCREEN_W_TILES+2+0] = SPR_POWER00+0;
+        nokia->tileMap[2*NK_SCREEN_W_TILES+3+0] = SPR_POWER00+1;
+        nokia->tileMap[3*NK_SCREEN_W_TILES+2+0] = SPR_POWER00+2;
+        nokia->tileMap[3*NK_SCREEN_W_TILES+3+0] = SPR_POWER00+3;
+        // POW_SHIELD
+        nokia->tileMap[2*NK_SCREEN_W_TILES+2+2] = SPR_POWER10+0;
+        nokia->tileMap[2*NK_SCREEN_W_TILES+3+2] = SPR_POWER10+1;
+        nokia->tileMap[3*NK_SCREEN_W_TILES+2+2] = SPR_POWER10+2;
+        nokia->tileMap[3*NK_SCREEN_W_TILES+3+2] = SPR_POWER10+3;
+        // // POW_BOOST
+        nokia->tileMap[2*NK_SCREEN_W_TILES+2+4] = SPR_POWER20+0;
+        nokia->tileMap[2*NK_SCREEN_W_TILES+3+4] = SPR_POWER20+1;
+        nokia->tileMap[3*NK_SCREEN_W_TILES+2+4] = SPR_POWER20+2;
+        nokia->tileMap[3*NK_SCREEN_W_TILES+3+4] = SPR_POWER20+3;
+        // // POW_SPREAD
+        nokia->tileMap[2*NK_SCREEN_W_TILES+2+6] = SPR_POWER30+0;
+        nokia->tileMap[2*NK_SCREEN_W_TILES+3+6] = SPR_POWER30+1;
+        nokia->tileMap[3*NK_SCREEN_W_TILES+2+6] = SPR_POWER30+2;
+        nokia->tileMap[3*NK_SCREEN_W_TILES+3+6] = SPR_POWER30+3;
+
+        switch (option)
+        {
+            case (POW_NONE):
+            {
+                nkSetText(nokia, 4,4, NK_FALSE, "NONE");
+                nokia->tileMap[2*NK_SCREEN_W_TILES+2+0] = SPR_POWER01+0;
+                nokia->tileMap[2*NK_SCREEN_W_TILES+3+0] = SPR_POWER01+1;
+                nokia->tileMap[3*NK_SCREEN_W_TILES+2+0] = SPR_POWER01+2;
+                nokia->tileMap[3*NK_SCREEN_W_TILES+3+0] = SPR_POWER01+3;
+            } break;
+            case (POW_SHIELD):
+            {
+                nkSetText(nokia, 3,4, NK_FALSE, "SHIELD");
+                nkSetText(nokia, 4,5, NK_FALSE, "$900");
+                nokia->tileMap[2*NK_SCREEN_W_TILES+2+2] = SPR_POWER11+0;
+                nokia->tileMap[2*NK_SCREEN_W_TILES+3+2] = SPR_POWER11+1;
+                nokia->tileMap[3*NK_SCREEN_W_TILES+2+2] = SPR_POWER11+2;
+                nokia->tileMap[3*NK_SCREEN_W_TILES+3+2] = SPR_POWER11+3;
+            } break;
+            case (POW_BOOST):
+            {
+                nkSetText(nokia, 3,4, NK_FALSE, "SPEEDY");
+                nkSetText(nokia, 4,5, NK_FALSE, "$500");
+                nokia->tileMap[2*NK_SCREEN_W_TILES+2+4] = SPR_POWER21+0;
+                nokia->tileMap[2*NK_SCREEN_W_TILES+3+4] = SPR_POWER21+1;
+                nokia->tileMap[3*NK_SCREEN_W_TILES+2+4] = SPR_POWER21+2;
+                nokia->tileMap[3*NK_SCREEN_W_TILES+3+4] = SPR_POWER21+3;
+            } break;
+            case (POW_SPREAD):
+            {
+                nkSetText(nokia, 3,4, NK_FALSE, "SPREAD");
+                nkSetText(nokia, 4,5, NK_FALSE, "$700");
+                nokia->tileMap[2*NK_SCREEN_W_TILES+2+6] = SPR_POWER31+0;
+                nokia->tileMap[2*NK_SCREEN_W_TILES+3+6] = SPR_POWER31+1;
+                nokia->tileMap[3*NK_SCREEN_W_TILES+2+6] = SPR_POWER31+2;
+                nokia->tileMap[3*NK_SCREEN_W_TILES+3+6] = SPR_POWER31+3;
+            } break;
+        }
+
+        // Shop controls.
+        if (nkKeyPressed(nokia, NK_KEY_A))
+        {
+            option--;
+            if (option < POW_NONE)
+            {
+                option = POW_SPREAD;
+            }
+        }
+        if (nkKeyPressed(nokia, NK_KEY_D))
+        {
+            option++;
+            if (option > POW_SPREAD)
+            {
+                option = POW_NONE;
+            }
+        }
+        if (nkKeyPressed(nokia, NK_KEY_SPACE))
+        {
+            /*
+            nkPlaySound(nokia, NK_SND_BLIP05);
+            switch (option)
+            {
+                case (MENU_OPSTART): StartGame(nokia);         break;
+                case (MENU_OPSCORE): gGameMode = GMODE_SCORES; break;
+                case (MENU_OPEXIT ): nkExit(nokia);            break;
+            }
+            */
+
+            nkClearTiles(nokia);
+            nkClearText(nokia);
+
+            gPlayer->x = 2;
+            gPlayer->y = (NK_SCREEN_H-NK_TILE_H)/2;
+
+            for (S32 i=1; i<NUM_ENTITIES; ++i)
+            {
+                gEntities[i].active = NK_FALSE;
+            }
+
+            gShop = NK_FALSE;
+        }
+
+        return;
+    }
+
     // Global game controls.
     if (gPlayer->active)
     {
@@ -624,6 +765,22 @@ void UpdateGame (nkCONTEXT* nokia)
 
     if (gPaused) return;
 
+    // Manage waves.
+    if (gWaveCounter >= gWaveMaxTime)
+    {
+        gWaveCounter = 0;
+        gWave++;
+        gShop = NK_TRUE;
+        if (gWave % 5 == 0) // Increase wave length every 5 waves.
+        {
+            gWaveMaxTime += 75;
+        }
+    }
+    else
+    {
+        gWaveCounter++;
+    }
+
     // Spawn monsters.
     if (gPlayer->active)
     {
@@ -636,23 +793,29 @@ void UpdateGame (nkCONTEXT* nokia)
         {
             gSpawnPawnCounter--;
         }
-        if (gSpawnSineCounter == 0) // ENT_MONSINE
+        if (gWave > 0)
         {
-            SpawnMonsterSine(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-NK_TILE_H)));
-            gSpawnSineCounter = nkRandomRangeS32(8,15);
+            if (gSpawnSineCounter == 0) // ENT_MONSINE
+            {
+                SpawnMonsterSine(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-NK_TILE_H)));
+                gSpawnSineCounter = nkRandomRangeS32(8,15);
+            }
+            else
+            {
+                gSpawnSineCounter--;
+            }
         }
-        else
+        if (gWave > 1)
         {
-            gSpawnSineCounter--;
-        }
-        if (gSpawnBoomCounter == 0) // ENT_MONBOOM
-        {
-            SpawnMonsterBoom(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-(NK_TILE_H*2))));
-            gSpawnBoomCounter = nkRandomRangeS32(50,120);
-        }
-        else
-        {
-            gSpawnBoomCounter--;
+            if (gSpawnBoomCounter == 0) // ENT_MONBOOM
+            {
+                SpawnMonsterBoom(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-(NK_TILE_H*2))));
+                gSpawnBoomCounter = nkRandomRangeS32(50,120);
+            }
+            else
+            {
+                gSpawnBoomCounter--;
+            }
         }
     }
 
