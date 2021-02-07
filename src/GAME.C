@@ -529,14 +529,11 @@ void UpdateScores (nkCONTEXT* nokia)
     nkSetText(nokia, 3,5, NK_FALSE, "000000");
 
     // Score controls.
-    if (nkKeyPressed(nokia, NK_KEY_SPACE))
+    if (nkKeyPressed(nokia, NK_KEY_SPACE) ||
+        nkKeyPressed(nokia, NK_KEY_ESCAPE))
     {
         nkPlaySound(nokia, NK_SND_BLIP05);
         gGameMode = GMODE_MENU;
-    }
-    if (nkKeyPressed(nokia, NK_KEY_ESCAPE))
-    {
-        nkExit(nokia);
     }
 }
 
@@ -563,12 +560,14 @@ void UpdateGame (nkCONTEXT* nokia)
 
         if (nkKeyPressed(nokia, NK_KEY_SPACE))
         {
+            nkPlaySound(nokia, NK_SND_BLIP05);
             StartGame(nokia);
             return;
         }
-        else if (nkKeyPressed(nokia, NK_KEY_ESCAPE))
+        if (nkKeyPressed(nokia, NK_KEY_ESCAPE))
         {
-            // @Incomplete: Exit to menu...
+            nkPlaySound(nokia, NK_SND_BLIP05);
+            gGameMode = GMODE_MENU;
             return;
         }
     }
