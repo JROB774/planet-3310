@@ -18,11 +18,12 @@
 
 #define ENT_EXPLODE  0x00
 #define ENT_PBULLET  0x01
-#define ENT_PLAYER   0x02
-#define ENT_MONPAWN  0x03
-#define ENT_MONSINE  0x04
-#define ENT_MONBLOB  0x05
-#define ENT_MONBOOM  0x06
+#define ENT_SBULLET  0x02
+#define ENT_PLAYER   0x03
+#define ENT_MONPAWN  0x04
+#define ENT_MONSINE  0x05
+#define ENT_MONBLOB  0x06
+#define ENT_MONBOOM  0x07
 
 #define DIR_N        0x00
 #define DIR_NE       0x01
@@ -79,6 +80,7 @@ static U32     gWave;
 static U32     gWaveCounter;
 static U32     gWaveMaxTime;
 static B8      gShop;
+static U8      gInvincible;
 
 void LoadScores ()
 {
@@ -208,6 +210,50 @@ void UpdateBullet (nkCONTEXT* nokia, ENTITY* e)
 }
 
 //
+// ENT_SBULLET
+//
+void SpawnSpreadBullet (S32 x, S32 y, U8 dir)
+{
+    for (S32 i=1; i<NUM_ENTITIES; ++i)
+    {
+        ENTITY* e = &gEntities[i];
+        if (!e->active)
+        {
+            e->x        = x;
+            e->y        = y;
+            e->hits     = 0;
+            e->type     = ENT_SBULLET;
+            e->spr      = SPR_SBULLET;
+            e->sprW     = 1;
+            e->sprH     = 1;
+            e->frame    = 0;
+            e->frameNum = 1;
+            e->timer    = 0;
+            e->active   = NK_TRUE;
+            e->extra    = dir;
+            break;
+        }
+    }
+}
+void UpdateSpreadBullet (nkCONTEXT* nokia, ENTITY* e)
+{
+    e->x += 12;
+    switch (e->extra)
+    {
+        case (DIR_NE): e->y -= 1; break;
+        case (DIR_SE): e->y += 1; break;
+    }
+
+    if ((e->x >= NK_SCREEN_W)          ||
+        (e->x+(e->sprW*NK_TILE_W) < 0) ||
+        (e->y >= NK_SCREEN_H)          ||
+        (e->y+(e->sprH*NK_TILE_H) < 0))
+    {
+        e->active = NK_FALSE;
+    }
+}
+
+//
 // ENT_PLAYER
 //
 void SpawnPlayer (S32 x, S32 y)
@@ -254,7 +300,9 @@ void UpdatePlayer (nkCONTEXT* nokia, ENTITY* e)
         {
             if (gPowerup == POW_SPREAD)
             {
-                // @Incomplete: ...
+                SpawnSpreadBullet(gPlayer->x+(NK_TILE_W*2)-3,gPlayer->y, DIR_NE);
+                SpawnSpreadBullet(gPlayer->x+(NK_TILE_W*2)-3,gPlayer->y, DIR_E);
+                SpawnSpreadBullet(gPlayer->x+(NK_TILE_W*2)-3,gPlayer->y, DIR_SE);
             }
             else
             {
@@ -269,30 +317,38 @@ void UpdatePlayer (nkCONTEXT* nokia, ENTITY* e)
         bulletCooldown--;
     }
 
-    for (S32 i=1; i<NUM_ENTITIES; ++i)
+    if (gInvincible <= 0)
     {
-        ENTITY* e2 = &gEntities[i];
-        if (e2->active && (e2->type == ENT_MONPAWN ||
-                           e2->type == ENT_MONSINE ||
-                           e2->type == ENT_MONBLOB ||
-                           e2->type == ENT_MONBOOM))
+        for (S32 i=1; i<NUM_ENTITIES; ++i)
         {
-            if (CheckCollision(e,e2))
+            ENTITY* e2 = &gEntities[i];
+            if (e2->active && (e2->type == ENT_MONPAWN ||
+                               e2->type == ENT_MONSINE ||
+                               e2->type == ENT_MONBLOB ||
+                               e2->type == ENT_MONBOOM))
             {
-                if (gPowerup == POW_SHIELD)
+                if (CheckCollision(e,e2))
                 {
-                    gPowerup = POW_NONE;
+                    if (gPowerup == POW_SHIELD)
+                    {
+                        gPowerup = POW_NONE;
+                        gInvincible = 30;
+                    }
+                    else
+                    {
+                        gPlayer->active = NK_FALSE;
+                        SpawnExplode(gPlayer->x+(NK_TILE_W/2),gPlayer->y);
+                        nkPlaySound(nokia, NK_SND_NEGTIV01);
+                        SaveScore(gScore);
+                    }
+                    break;
                 }
-                else
-                {
-                    gPlayer->active = NK_FALSE;
-                    SpawnExplode(gPlayer->x+(NK_TILE_W/2),gPlayer->y);
-                    nkPlaySound(nokia, NK_SND_NEGTIV01);
-                    SaveScore(gScore);
-                }
-                break;
             }
         }
+    }
+    else
+    {
+        gInvincible--;
     }
 }
 
@@ -336,7 +392,7 @@ void UpdateMonsterPawn (nkCONTEXT* nokia, ENTITY* e)
     for (S32 i=1; i<NUM_ENTITIES; ++i)
     {
         ENTITY* e2 = &gEntities[i];
-        if (e2->active && e2->type == ENT_PBULLET)
+        if (e2->active && (e2->type == ENT_PBULLET || e2->type == ENT_SBULLET))
         {
             if (CheckCollision(e,e2))
             {
@@ -398,7 +454,7 @@ void UpdateMonsterSine (nkCONTEXT* nokia, ENTITY* e)
     for (S32 i=1; i<NUM_ENTITIES; ++i)
     {
         ENTITY* e2 = &gEntities[i];
-        if (e2->active && e2->type == ENT_PBULLET)
+        if (e2->active && (e2->type == ENT_PBULLET || e2->type == ENT_SBULLET))
         {
             if (CheckCollision(e,e2))
             {
@@ -504,7 +560,7 @@ void UpdateMonsterBoom (nkCONTEXT* nokia, ENTITY* e)
     for (S32 i=1; i<NUM_ENTITIES; ++i)
     {
         ENTITY* e2 = &gEntities[i];
-        if (e2->active && e2->type == ENT_PBULLET)
+        if (e2->active && (e2->type == ENT_PBULLET || e2->type == ENT_SBULLET))
         {
             if (CheckCollision(e,e2))
             {
@@ -676,7 +732,7 @@ void UpdateGame (nkCONTEXT* nokia)
             case (POW_SHIELD):
             {
                 nkSetText(nokia, 3,4, NK_FALSE, "SHIELD");
-                nkSetText(nokia, 4,5, NK_FALSE, "$900");
+                nkSetText(nokia, 3,5, NK_FALSE, "$2,000");
                 nokia->tileMap[2*NK_SCREEN_W_TILES+2+2] = SPR_POWER11+0;
                 nokia->tileMap[2*NK_SCREEN_W_TILES+3+2] = SPR_POWER11+1;
                 nokia->tileMap[3*NK_SCREEN_W_TILES+2+2] = SPR_POWER11+2;
@@ -685,7 +741,7 @@ void UpdateGame (nkCONTEXT* nokia)
             case (POW_BOOST):
             {
                 nkSetText(nokia, 3,4, NK_FALSE, "SPEEDY");
-                nkSetText(nokia, 4,5, NK_FALSE, "$500");
+                nkSetText(nokia, 3,5, NK_FALSE, "$1,000");
                 nokia->tileMap[2*NK_SCREEN_W_TILES+2+4] = SPR_POWER21+0;
                 nokia->tileMap[2*NK_SCREEN_W_TILES+3+4] = SPR_POWER21+1;
                 nokia->tileMap[3*NK_SCREEN_W_TILES+2+4] = SPR_POWER21+2;
@@ -694,7 +750,7 @@ void UpdateGame (nkCONTEXT* nokia)
             case (POW_SPREAD):
             {
                 nkSetText(nokia, 3,4, NK_FALSE, "SPREAD");
-                nkSetText(nokia, 4,5, NK_FALSE, "$700");
+                nkSetText(nokia, 3,5, NK_FALSE, "$3,000");
                 nokia->tileMap[2*NK_SCREEN_W_TILES+2+6] = SPR_POWER31+0;
                 nokia->tileMap[2*NK_SCREEN_W_TILES+3+6] = SPR_POWER31+1;
                 nokia->tileMap[3*NK_SCREEN_W_TILES+2+6] = SPR_POWER31+2;
@@ -732,12 +788,12 @@ void UpdateGame (nkCONTEXT* nokia)
                 } break;
                 case (POW_SHIELD):
                 {
-                    if (gScore >= 900)
+                    if (gScore >= 2000)
                     {
                         if (gPowerup != POW_SHIELD)
                         {
                             gPowerup = POW_SHIELD;
-                            gScore -= 900;
+                            gScore -= 2000;
                         }
                     }
                     else
@@ -747,10 +803,10 @@ void UpdateGame (nkCONTEXT* nokia)
                 } break;
                 case (POW_BOOST):
                 {
-                    if (gScore >= 500)
+                    if (gScore >= 1000)
                     {
                         gPowerup = POW_BOOST;
-                        gScore -= 500;
+                        gScore -= 1000;
                     }
                     else
                     {
@@ -759,10 +815,10 @@ void UpdateGame (nkCONTEXT* nokia)
                 } break;
                 case (POW_SPREAD):
                 {
-                    if (gScore >= 700)
+                    if (gScore >= 3000)
                     {
                         gPowerup = POW_SPREAD;
-                        gScore -= 700;
+                        gScore -= 3000;
                     }
                     else
                     {
@@ -823,62 +879,57 @@ void UpdateGame (nkCONTEXT* nokia)
         }
     }
 
-    if (gPaused) return;
-
-    // Manage waves.
-    if (gPlayer->active)
+    if (gPaused || !gPlayer->active)
     {
-        if (gWaveCounter >= gWaveMaxTime)
-        {
-            gWaveCounter = 0;
-            gWave++;
-            gShop = NK_TRUE;
-            if (gWave % 5 == 0) // Increase wave length every 5 waves.
-            {
-                gWaveMaxTime += 75;
-            }
-        }
-        else
-        {
-            gWaveCounter++;
-        }
+        return;
     }
 
-    // Spawn monsters.
-    if (gPlayer->active)
+    if (gWaveCounter >= gWaveMaxTime)
     {
-        if (gSpawnPawnCounter == 0) // ENT_MONPAWN
+        gWaveCounter = 0;
+        gWave++;
+        gShop = NK_TRUE;
+        if (gWave % 5 == 0) // Increase wave length every 5 waves.
         {
-            SpawnMonsterPawn(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-NK_TILE_H)));
-            gSpawnPawnCounter = nkRandomRangeS32(4,8);
+            gWaveMaxTime += 75;
+        }
+    }
+    else
+    {
+        gWaveCounter++;
+    }
+
+    if (gSpawnPawnCounter == 0) // ENT_MONPAWN
+    {
+        SpawnMonsterPawn(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-NK_TILE_H)));
+        gSpawnPawnCounter = nkRandomRangeS32(4,8);
+    }
+    else
+    {
+        gSpawnPawnCounter--;
+    }
+    if (gWave > 0)
+    {
+        if (gSpawnSineCounter == 0) // ENT_MONSINE
+        {
+            SpawnMonsterSine(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-NK_TILE_H)));
+            gSpawnSineCounter = nkRandomRangeS32(8,15);
         }
         else
         {
-            gSpawnPawnCounter--;
+            gSpawnSineCounter--;
         }
-        if (gWave > 0)
+    }
+    if (gWave > 1)
+    {
+        if (gSpawnBoomCounter == 0) // ENT_MONBOOM
         {
-            if (gSpawnSineCounter == 0) // ENT_MONSINE
-            {
-                SpawnMonsterSine(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-NK_TILE_H)));
-                gSpawnSineCounter = nkRandomRangeS32(8,15);
-            }
-            else
-            {
-                gSpawnSineCounter--;
-            }
+            SpawnMonsterBoom(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-(NK_TILE_H*2))));
+            gSpawnBoomCounter = nkRandomRangeS32(50,120);
         }
-        if (gWave > 1)
+        else
         {
-            if (gSpawnBoomCounter == 0) // ENT_MONBOOM
-            {
-                SpawnMonsterBoom(NK_SCREEN_W, nkRandomRangeS32(0,(NK_SCREEN_H-(NK_TILE_H*2))));
-                gSpawnBoomCounter = nkRandomRangeS32(50,120);
-            }
-            else
-            {
-                gSpawnBoomCounter--;
-            }
+            gSpawnBoomCounter--;
         }
     }
 
@@ -890,13 +941,14 @@ void UpdateGame (nkCONTEXT* nokia)
         {
             switch (e->type)
             {
-                case (ENT_EXPLODE): UpdateExplode    (nokia, e); break;
-                case (ENT_PBULLET): UpdateBullet     (nokia, e); break;
-                case (ENT_PLAYER ): UpdatePlayer     (nokia, e); break;
-                case (ENT_MONPAWN): UpdateMonsterPawn(nokia, e); break;
-                case (ENT_MONSINE): UpdateMonsterSine(nokia, e); break;
-                case (ENT_MONBLOB): UpdateMonsterBlob(nokia, e); break;
-                case (ENT_MONBOOM): UpdateMonsterBoom(nokia, e); break;
+                case (ENT_EXPLODE): UpdateExplode     (nokia, e); break;
+                case (ENT_PBULLET): UpdateBullet      (nokia, e); break;
+                case (ENT_SBULLET): UpdateSpreadBullet(nokia, e); break;
+                case (ENT_PLAYER ): UpdatePlayer      (nokia, e); break;
+                case (ENT_MONPAWN): UpdateMonsterPawn (nokia, e); break;
+                case (ENT_MONSINE): UpdateMonsterSine (nokia, e); break;
+                case (ENT_MONBLOB): UpdateMonsterBlob (nokia, e); break;
+                case (ENT_MONBOOM): UpdateMonsterBoom (nokia, e); break;
             }
         }
     }
@@ -907,6 +959,11 @@ void UpdateGame (nkCONTEXT* nokia)
         ENTITY* e = &gEntities[i];
         if (e->active)
         {
+            if (e->type == ENT_PLAYER && gInvincible && nokia->frame % 2 == 0) // Blink the player when invincible.
+            {
+                continue;
+            }
+
             U8 sprCount = e->sprW * e->sprH;
 
             if (nokia->frame % 2 == 0) // Update animations.
