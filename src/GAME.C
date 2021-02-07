@@ -96,8 +96,8 @@ void UpdateExplode (nkCONTEXT* nokia, ENTITY* e)
 //
 void SpawnBullet (S32 x, S32 y)
 {
-    if (GetEntityTypeCount(ENT_PBULLET) < 5)
-    {
+    // if (GetEntityTypeCount(ENT_PBULLET) < 5)
+    // {
         for (S32 i=1; i<NUM_ENTITIES; ++i)
         {
             ENTITY* e = &gEntities[i];
@@ -116,7 +116,7 @@ void SpawnBullet (S32 x, S32 y)
                 break;
             }
         }
-    }
+    // }
 }
 void UpdateBullet (nkCONTEXT* nokia, ENTITY* e)
 {
@@ -145,6 +145,8 @@ void SpawnPlayer (S32 x, S32 y)
 }
 void UpdatePlayer (nkCONTEXT* nokia, ENTITY* e)
 {
+    static S8 bulletCooldown = 0;
+
     U8 playerSpeed = 3;
 
     if (nkKeyDown(nokia, NK_KEY_W)) gPlayer->y -= playerSpeed;
@@ -160,9 +162,18 @@ void UpdatePlayer (nkCONTEXT* nokia, ENTITY* e)
     if (gPlayer->y < 0) e->y = 0;
     if (gPlayer->y+h > NK_SCREEN_H) gPlayer->y = NK_SCREEN_H-h;
 
-    if (nkKeyDown(nokia, NK_KEY_SPACE))
+    // Fire bullets.
+    if (bulletCooldown == 0)
     {
-        SpawnBullet(gPlayer->x+(NK_TILE_W*2)-3,gPlayer->y);
+        if (nkKeyDown(nokia, NK_KEY_SPACE))
+        {
+            SpawnBullet(gPlayer->x+(NK_TILE_W*2)-3,gPlayer->y);
+            bulletCooldown = 2;
+        }
+    }
+    else
+    {
+        bulletCooldown--;
     }
 
     for (S32 i=1; i<NUM_ENTITIES; ++i)
