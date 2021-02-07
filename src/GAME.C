@@ -9,9 +9,9 @@
 
 #define NUM_ENTITIES 256
 
-#define ENT_PLAYER  0
+#define ENT_EXPLODE 0
 #define ENT_PBULLET 1
-#define ENT_EXPLODE 2
+#define ENT_PLAYER  2
 #define ENT_MONPAWN 3
 #define ENT_MONSINE 4
 
@@ -33,7 +33,7 @@ typedef struct
 static ENTITY  gEntities[NUM_ENTITIES];
 static ENTITY* gPlayer = gEntities;
 static U32     gSpawnCounter = 0;
-static U32     gScore = 0;
+static S32     gScore = 0;
 
 U32 GetEntityTypeCount (U8 type)
 {
@@ -58,13 +58,46 @@ B8 CheckCollision (ENTITY* a, ENTITY* b)
 }
 
 //
+// ENT_EXPLODE
+//
+void SpawnExplode (S32 x, S32 y)
+{
+    for (S32 i=1; i<NUM_ENTITIES; ++i)
+    {
+        ENTITY* e = &gEntities[i];
+        if (!e->active)
+        {
+            e->x        = x;
+            e->y        = y;
+            e->type     = ENT_EXPLODE;
+            e->spr      = SPR_EXPLODE;
+            e->sprW     = 1;
+            e->sprH     = 1;
+            e->frame    = 0;
+            e->frameNum = 2;
+            e->timer    = 0;
+            e->active   = NK_TRUE;
+            break;
+        }
+    }
+}
+void UpdateExplode (nkCONTEXT* nokia, ENTITY* e)
+{
+    e->timer++;
+    if (e->timer >= 4)
+    {
+        e->active = NK_FALSE;
+    }
+}
+
+//
 // ENT_PBULLET
 //
 void SpawnBullet (S32 x, S32 y)
 {
     if (GetEntityTypeCount(ENT_PBULLET) < 5)
     {
-        for (S32 i=0; i<NUM_ENTITIES; ++i)
+        for (S32 i=1; i<NUM_ENTITIES; ++i)
         {
             ENTITY* e = &gEntities[i];
             if (!e->active)
@@ -118,42 +151,33 @@ void UpdatePlayer (nkCONTEXT* nokia, ENTITY* e)
     if (nkKeyDown(nokia, NK_KEY_S)) gPlayer->y += playerSpeed;
     if (nkKeyDown(nokia, NK_KEY_D)) gPlayer->x += playerSpeed;
 
+    S32 w = (gPlayer->sprW * NK_TILE_W);
+    S32 h = (gPlayer->sprH * NK_TILE_H);
+
+    if (gPlayer->x < 0) e->x = 0;
+    if (gPlayer->x+w > NK_SCREEN_W) gPlayer->x = NK_SCREEN_W-w;
+    if (gPlayer->y < 0) e->y = 0;
+    if (gPlayer->y+h > NK_SCREEN_H) gPlayer->y = NK_SCREEN_H-h;
+
     if (nkKeyDown(nokia, NK_KEY_SPACE))
     {
         SpawnBullet(gPlayer->x+(NK_TILE_W*2)-3,gPlayer->y);
     }
-}
 
-//
-// ENT_EXPLODE
-//
-void SpawnExplode (S32 x, S32 y)
-{
-    for (S32 i=0; i<NUM_ENTITIES; ++i)
+    for (S32 i=1; i<NUM_ENTITIES; ++i)
     {
-        ENTITY* e = &gEntities[i];
-        if (!e->active)
+        ENTITY* e2 = &gEntities[i];
+        if (e2->active && (e2->type == ENT_MONPAWN ||
+                           e2->type == ENT_MONSINE))
         {
-            e->x        = x;
-            e->y        = y;
-            e->type     = ENT_EXPLODE;
-            e->spr      = SPR_EXPLODE;
-            e->sprW     = 1;
-            e->sprH     = 1;
-            e->frame    = 0;
-            e->frameNum = 2;
-            e->timer    = 0;
-            e->active   = NK_TRUE;
-            break;
+            if (CheckCollision(e,e2))
+            {
+                gPlayer->active = NK_FALSE;
+                SpawnExplode(gPlayer->x+(NK_TILE_W/2),gPlayer->y);
+                nkPlaySound(nokia, NK_SND_NEGTIV01);
+                break;
+            }
         }
-    }
-}
-void UpdateExplode (nkCONTEXT* nokia, ENTITY* e)
-{
-    e->timer++;
-    if (e->timer >= 4)
-    {
-        e->active = NK_FALSE;
     }
 }
 
@@ -162,7 +186,7 @@ void UpdateExplode (nkCONTEXT* nokia, ENTITY* e)
 //
 void SpawnMonsterPawn (S32 x, S32 y)
 {
-    for (S32 i=0; i<NUM_ENTITIES; ++i)
+    for (S32 i=1; i<NUM_ENTITIES; ++i)
     {
         ENTITY* e = &gEntities[i];
         if (!e->active)
@@ -189,7 +213,7 @@ void UpdateMonsterPawn (nkCONTEXT* nokia, ENTITY* e)
         e->active = NK_FALSE;
     }
 
-    for (S32 i=0; i<NUM_ENTITIES; ++i)
+    for (S32 i=1; i<NUM_ENTITIES; ++i)
     {
         ENTITY* e2 = &gEntities[i];
         if (e2->active && e2->type == ENT_PBULLET)
@@ -198,8 +222,12 @@ void UpdateMonsterPawn (nkCONTEXT* nokia, ENTITY* e)
             {
                 e->active = NK_FALSE;
                 SpawnExplode(e->x+(NK_TILE_W/2),e->y);
-                nkPlaySound(nokia, NK_SND_HIT01);
+                if (gPlayer->active) // So it doesn't override the death sound.
+                {
+                    nkPlaySound(nokia, NK_SND_HIT01);
+                }
                 gScore += 10;
+                break;
             }
         }
     }
@@ -210,11 +238,11 @@ void UpdateMonsterPawn (nkCONTEXT* nokia, ENTITY* e)
 //
 void SpawnMonsterSine (S32 x, S32 y)
 {
-
+    // @Incomplete: ...
 }
 void UpdateMonsterSine (nkCONTEXT* nokia, ENTITY* e)
 {
-
+    // @Incomplete: ...
 }
 
 void nkGameStartup (nkCONTEXT* nokia)
@@ -244,9 +272,9 @@ void nkGameUpdate (nkCONTEXT* nokia)
         {
             switch (e->type)
             {
-                case (ENT_PLAYER ): UpdatePlayer     (nokia, e); break;
-                case (ENT_PBULLET): UpdateBullet     (nokia, e); break;
                 case (ENT_EXPLODE): UpdateExplode    (nokia, e); break;
+                case (ENT_PBULLET): UpdateBullet     (nokia, e); break;
+                case (ENT_PLAYER ): UpdatePlayer     (nokia, e); break;
                 case (ENT_MONPAWN): UpdateMonsterPawn(nokia, e); break;
                 case (ENT_MONSINE): UpdateMonsterSine(nokia, e); break;
             }
@@ -285,5 +313,6 @@ void nkGameUpdate (nkCONTEXT* nokia)
 
     // Update the score.
     if (gScore > 999999) gScore = 999999;
+    if (gScore < 0) gScore = 0;
     nkSetText(nokia, 3,0, NK_FALSE, "%06d", gScore);
 }
