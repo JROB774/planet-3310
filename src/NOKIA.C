@@ -76,7 +76,7 @@ typedef enum
     NK_KEY_X,
     NK_KEY_C,
     NK_KEY_SPACE,
-    NK_KEY_COMMA,
+    NK_KEY_ESCAPE,
     NK_KEY_POINT,
     NK_KEY_TOTAL
 

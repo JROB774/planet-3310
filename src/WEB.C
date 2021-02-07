@@ -36,18 +36,18 @@ void SDLMainLoop (void* userdata)
 
     memcpy(context->nokia->prevKeyState, context->nokia->currKeyState, sizeof(context->nokia->prevKeyState));
     const Uint8* keyState = SDL_GetKeyboardState(NULL);
-    context->nokia->currKeyState[NK_KEY_Q    ] = keyState[SDL_SCANCODE_Q];
-    context->nokia->currKeyState[NK_KEY_W    ] = keyState[SDL_SCANCODE_W];
-    context->nokia->currKeyState[NK_KEY_E    ] = keyState[SDL_SCANCODE_E];
-    context->nokia->currKeyState[NK_KEY_A    ] = keyState[SDL_SCANCODE_A];
-    context->nokia->currKeyState[NK_KEY_S    ] = keyState[SDL_SCANCODE_S];
-    context->nokia->currKeyState[NK_KEY_D    ] = keyState[SDL_SCANCODE_D];
-    context->nokia->currKeyState[NK_KEY_Z    ] = keyState[SDL_SCANCODE_Z];
-    context->nokia->currKeyState[NK_KEY_X    ] = keyState[SDL_SCANCODE_X];
-    context->nokia->currKeyState[NK_KEY_C    ] = keyState[SDL_SCANCODE_C];
-    context->nokia->currKeyState[NK_KEY_SPACE] = keyState[SDL_SCANCODE_SPACE];
-    context->nokia->currKeyState[NK_KEY_COMMA] = keyState[SDL_SCANCODE_COMMA];
-    context->nokia->currKeyState[NK_KEY_POINT] = keyState[SDL_SCANCODE_PERIOD];
+    context->nokia->currKeyState[NK_KEY_Q     ] = keyState[SDL_SCANCODE_Q];
+    context->nokia->currKeyState[NK_KEY_W     ] = keyState[SDL_SCANCODE_W];
+    context->nokia->currKeyState[NK_KEY_E     ] = keyState[SDL_SCANCODE_E];
+    context->nokia->currKeyState[NK_KEY_A     ] = keyState[SDL_SCANCODE_A];
+    context->nokia->currKeyState[NK_KEY_S     ] = keyState[SDL_SCANCODE_S];
+    context->nokia->currKeyState[NK_KEY_D     ] = keyState[SDL_SCANCODE_D];
+    context->nokia->currKeyState[NK_KEY_Z     ] = keyState[SDL_SCANCODE_Z];
+    context->nokia->currKeyState[NK_KEY_X     ] = keyState[SDL_SCANCODE_X];
+    context->nokia->currKeyState[NK_KEY_C     ] = keyState[SDL_SCANCODE_C];
+    context->nokia->currKeyState[NK_KEY_SPACE ] = keyState[SDL_SCANCODE_SPACE];
+    context->nokia->currKeyState[NK_KEY_ESCAPE] = keyState[SDL_SCANCODE_ESCAPE];
+    context->nokia->currKeyState[NK_KEY_POINT ] = keyState[SDL_SCANCODE_PERIOD];
 
     nkBeginFrame(context->nokia);
     nkGameUpdate(context->nokia);
