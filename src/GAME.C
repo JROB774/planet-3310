@@ -435,6 +435,16 @@ void nkGameUpdate (nkCONTEXT* nokia)
         gSpawnBoomCounter--;
     }
 
+    // Global game controls.
+    if (!gPlayer->active)
+    {
+        if (nkKeyPressed(nokia, NK_KEY_SPACE)) // Restart the game if dead.
+        {
+            StartGame();
+            return;
+        }
+    }
+
     // Update entities.
     for (S32 i=0; i<NUM_ENTITIES; ++i)
     {
