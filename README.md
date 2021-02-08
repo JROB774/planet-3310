@@ -37,4 +37,4 @@ with the repo.
 
 ## License
 
-The project's code is available under the **[MIT License](https://github.com/JROB774/nokia/blob/master/LICENSE)**.
+The project's code is available under the **[MIT License](https://github.com/JROB774/nokiajam/blob/master/LICENSE)**.
