@@ -1,14 +1,5 @@
 # NOKIA 3310 JAM 3 (Planet 3310)
 
-### ***THIS PROJECT HAS NOW BEEN ARCHIVED!***
-
-*The project has been archived to preserve its state at the end of 2021's
-**[NOKIA 3310 JAM 3](https://itch.io/jam/nokiajam3)** contest.*
-
-***Below is the original README for this repository.***
-
----
-
 This project was made for 2021's **[NOKIA 3310 JAM 3](https://itch.io/jam/nokiajam3)**.
 It is a simple 2D shoot-em-up about getting the highest score possible. A download
 for the game can be found over on **[itch.io](https://jrob774.itch.io/planet-3310)**,
