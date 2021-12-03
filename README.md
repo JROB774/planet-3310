@@ -1,4 +1,4 @@
-# NOKIA 3310 JAM 3 (Planet 3310)
+# Planet 3310 (NOKIA 3310 JAM 3)
 
 This project was made for 2021's **[NOKIA 3310 JAM 3](https://itch.io/jam/nokiajam3)**.
 It is a simple 2D shoot-em-up about getting the highest score possible. A download
